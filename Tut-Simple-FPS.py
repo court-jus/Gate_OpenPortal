@@ -52,19 +52,19 @@ class Player(object):
     """
         Player is the main actor in the fps game
     """
-    speed = 50
     FORWARD = Vec3(0,2,0)
     BACK = Vec3(0,-1,0)
     LEFT = Vec3(-1,0,0)
     RIGHT = Vec3(1,0,0)
     STOP = Vec3(0)
-    walk = STOP
-    strafe = STOP
-    readyToJump = False
-    jump = 0
     
     def __init__(self):
         """ inits the player """
+        self.speed = 50
+        self.walk = self.STOP
+        self.strafe = self.STOP
+        self.readyToJump = False
+        self.jump = 0
         self.loadModel()
         self.setUpCamera()
         self.createCollisions()

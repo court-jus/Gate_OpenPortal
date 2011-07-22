@@ -16,6 +16,8 @@ GRAVITY = 20
 RUN_SPEED = 50
 PLAYER_TO_FLOOR_TOLERANCE = .3
 PLAYER_TO_FLOOR_TOLERANCE_FOR_REJUMP = 1
+ORANGE = (242/255., 181/255., 75/255.,1)
+BLUE = (89/255.,100/255.,122/255.,1)
 
 class FPS(object):
     """
@@ -116,6 +118,8 @@ class Player(object):
         self.readyToJump = False
         self.mass = Mass()
         self.loadModel()
+        self.bluePortal = self.newPortal(BLUE)
+        self.orangePortal = self.newPortal(ORANGE)
         self.setUpCamera()
         self.createCollisions()
         self.attachControls()
@@ -123,6 +127,7 @@ class Player(object):
         taskMgr.add(self.mouseUpdate, 'mouse-task')
         taskMgr.add(self.moveUpdate, 'move-task')
         taskMgr.add(self.jumpUpdate, 'jump-task')
+        self.current_target = None
 
     def loadModel(self):
         """ make the nodepath for player """
@@ -131,6 +136,18 @@ class Player(object):
         self.node.setPos(0,0,2)
         self.node.setScale(.05)
         self.mass.pos = VBase3(self.node.getX(), self.node.getY(), self.node.getZ())
+
+    def newPortal(self, color):
+        por = loader.loadModel("cube")
+        por.reparentTo(render)
+        por.setPos(color[0],color[1],color[2])
+        por.setScale(0.1,0.1,0.1)
+        ambient = AmbientLight('ambient')
+        ambient.setColor(Vec4(*color))
+        ambientNP = por.attachNewNode(ambient)
+        por.setLightOff()
+        por.setLight(ambientNP)
+        return por
 
     def setUpCamera(self):
         """ puts camera at the players node """
@@ -158,6 +175,38 @@ class Player(object):
         self.nodeGroundHandler = CollisionHandlerQueue()
         base.cTrav.addCollider(solid, self.nodeGroundHandler)
 
+        # Fire the portals
+        firingNode = CollisionNode('mouseRay')
+        firingNP = base.camera.attachNewNode(firingNode)
+        firingNP.show()
+        firingNode.setFromCollideMask(BitMask32.bit(0))
+        firingNode.setIntoCollideMask(BitMask32.allOff())
+        firingRay = CollisionRay()
+        firingRay.setOrigin(0,0,0)
+        firingRay.setDirection(0,1,0)
+        firingNode.addSolid(firingRay)
+        firingHandler = CollisionHandlerEvent()
+        firingHandler.addAgainPattern('piou')
+        base.cTrav.addCollider(firingNP, firingHandler)
+        base.cTrav.showCollisions(render)
+
+        # Enter the portals
+        cn = CollisionNode('bluePortal')
+        np = self.bluePortal.attachNewNode(cn)
+        np.show()
+        cn.addSolid(CollisionSphere(0,0,0,2))
+        h = CollisionHandlerEvent()
+        h.addInPattern('%fn-%in')
+        base.cTrav.addCollider(np, h)
+        cn = CollisionNode('orangePortal')
+        np = self.orangePortal.attachNewNode(cn)
+        np.show()
+        cn.addSolid(CollisionSphere(0,0,0,2))
+        h = CollisionHandlerEvent()
+        h.addInPattern('%fn-%in')
+        base.cTrav.addCollider(np, h)
+
+
     def attachControls(self):
         """ attach key events """
         base.accept( "space" , self.__setattr__,["readyToJump",True])
@@ -171,6 +220,11 @@ class Player(object):
         base.accept( "d" , self.__setattr__,["strafe",self.RIGHT] )
         base.accept( "q-up" if AZERTY else "a-up" , self.__setattr__,["strafe",self.STOP] )
         base.accept( "d-up" , self.__setattr__,["strafe",self.STOP] )
+        base.accept( "mouse1" , self.fireBlue )
+        base.accept( "mouse3" , self.fireOrange )
+        base.accept( "piou" , self.fireUpdate )
+        base.accept( "bluePortal-player" , self.enterPortal, ["blue"] )
+        base.accept( "orangePortal-player" , self.enterPortal, ["orange"] )
 
     def mouseUpdate(self,task):
         """ this task updates the mouse """
@@ -209,5 +263,16 @@ class Player(object):
             self.mass.jump(JUMP_FORCE)
         return task.cont
 
+    def fireUpdate(self, what):
+        self.current_target = what
+
+    def fireBlue(self, *arg, **kwargs):
+        self.bluePortal.setPos(self.current_target.getSurfacePoint(render))
+
+    def fireOrange(self, *arg, **kwargs):
+        self.orangePortal.setPos(self.current_target.getSurfacePoint(render))
+
+    def enterPortal(self, color, collision):
+        self.node.setPos({"orange": self.bluePortal, "blue": self.orangePortal}.get(color).getPos())
 FPS()
 run()

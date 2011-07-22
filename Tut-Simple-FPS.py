@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 awsd - movement
 space - jump
@@ -10,6 +11,11 @@ from direct.gui.OnscreenText import OnscreenText
 import sys
 
 AZERTY = True
+JUMP_FORCE = 80
+GRAVITY = 20
+RUN_SPEED = 50
+PLAYER_TO_FLOOR_TOLERANCE = .3
+PLAYER_TO_FLOOR_TOLERANCE_FOR_REJUMP = 1
 
 class FPS(object):
     """
@@ -37,18 +43,18 @@ class FPS(object):
         """ create the collision system """
         base.cTrav = CollisionTraverser()
         base.pusher = CollisionHandlerPusher()
-        
+
     def loadLevel(self):
-        """ load the self.level 
+        """ load the self.level
             must have
-            <Group> *something* { 
-              <Collide> { Polyset keep descend } 
+            <Group> *something* {
+              <Collide> { Polyset keep descend }
             in the egg file
         """
-        self.level = loader.loadModel('level.egg')
+        self.level = loader.loadModel('level')
         self.level.reparentTo(render)
         self.level.setTwoSided(True)
-                
+
     def initPlayer(self):
         """ loads the player and creates all the controls for him"""
         self.node = Player()
@@ -61,6 +67,37 @@ class FPS(object):
             self.fps_tot = 0
             self.fps_count = 0
         return task.cont
+
+class Mass(object):
+    def __init__(self):
+        self.pos = VBase3(0,0,0)
+        self.vel = VBase3(0,0,0)
+        self.force = VBase3(0,0,0)
+        self.grav = VBase3(0,0,-GRAVITY)
+        self.first_fall = True
+
+    def jump(self, vertical_force):
+        self.force = VBase3(0,0,vertical_force)
+
+    def simulate(self, dt):
+        # Ignore first_fall as dt is too big the first time
+        if not self.first_fall:
+            # dt = secondes
+            # 1 unit of the 'render' universe looks like 10 meters (approx)
+            # so I consider every thing is divided by 10
+            self.vel += (self.force + self.grav) * dt
+            self.force = VBase3(0,0,0)
+            self.pos += self.vel * dt
+            # dt = secondes
+        self.first_fall = False
+
+    def zero(self):
+        self.vel = VBase3(0,0,0)
+        self.force = VBase3(0,0,0)
+
+    def __str__(self):
+        return "%s %s %s" % (self.pos, self.vel, self.force+ self.grav)
+
 class Player(object):
     """
         Player is the main actor in the fps game
@@ -70,14 +107,14 @@ class Player(object):
     LEFT = Vec3(-1,0,0)
     RIGHT = Vec3(1,0,0)
     STOP = Vec3(0)
-    
+
     def __init__(self):
         """ inits the player """
-        self.speed = 50
+        self.speed = RUN_SPEED
         self.walk = self.STOP
         self.strafe = self.STOP
         self.readyToJump = False
-        self.jump = 0
+        self.mass = Mass()
         self.loadModel()
         self.setUpCamera()
         self.createCollisions()
@@ -86,21 +123,22 @@ class Player(object):
         taskMgr.add(self.mouseUpdate, 'mouse-task')
         taskMgr.add(self.moveUpdate, 'move-task')
         taskMgr.add(self.jumpUpdate, 'jump-task')
-        
+
     def loadModel(self):
         """ make the nodepath for player """
         self.node = NodePath('player')
         self.node.reparentTo(render)
         self.node.setPos(0,0,2)
         self.node.setScale(.05)
-    
+        self.mass.pos = VBase3(self.node.getX(), self.node.getY(), self.node.getZ())
+
     def setUpCamera(self):
         """ puts camera at the players node """
         pl =  base.cam.node().getLens()
         pl.setFov(70)
         base.cam.node().setLens(pl)
         base.camera.reparentTo(self.node)
-        
+
     def createCollisions(self):
         """ create a collision solid and ray for the player """
         cn = CollisionNode('player')
@@ -119,7 +157,7 @@ class Player(object):
         solid = self.node.attachNewNode(cn)
         self.nodeGroundHandler = CollisionHandlerQueue()
         base.cTrav.addCollider(solid, self.nodeGroundHandler)
-        
+
     def attachControls(self):
         """ attach key events """
         base.accept( "space" , self.__setattr__,["readyToJump",True])
@@ -133,7 +171,7 @@ class Player(object):
         base.accept( "d" , self.__setattr__,["strafe",self.RIGHT] )
         base.accept( "q-up" if AZERTY else "a-up" , self.__setattr__,["strafe",self.STOP] )
         base.accept( "d-up" , self.__setattr__,["strafe",self.STOP] )
-        
+
     def mouseUpdate(self,task):
         """ this task updates the mouse """
         md = base.win.getPointer(0)
@@ -143,14 +181,14 @@ class Player(object):
             self.node.setH(self.node.getH() -  (x - base.win.getXSize()/2)*0.1)
             base.camera.setP(base.camera.getP() - (y - base.win.getYSize()/2)*0.1)
         return task.cont
-    
-    def moveUpdate(self,task): 
+
+    def moveUpdate(self,task):
         """ this task makes the player move """
         # move where the keys set it
         self.node.setPos(self.node,self.walk*globalClock.getDt()*self.speed)
         self.node.setPos(self.node,self.strafe*globalClock.getDt()*self.speed)
         return task.cont
-        
+
     def jumpUpdate(self,task):
         """ this task simulates gravity and makes the player jump """
         # get the highest Z from the down casting ray
@@ -161,14 +199,15 @@ class Player(object):
             if z > highestZ and entry.getIntoNode().getName() == "Cube":
                 highestZ = z
         # gravity effects and jumps
-        self.node.setZ(self.node.getZ()+self.jump*globalClock.getDt())
-        self.jump -= 1*globalClock.getDt()
-        if highestZ > self.node.getZ()-.3:
-            self.jump = 0
-            self.node.setZ(highestZ+.3)
-            if self.readyToJump:
-                self.jump = 1
+        self.mass.simulate(globalClock.getDt())
+        self.node.setZ(self.mass.pos.getZ())
+        if highestZ > self.node.getZ()-PLAYER_TO_FLOOR_TOLERANCE:
+            self.mass.zero()
+            self.mass.pos.setZ(highestZ+PLAYER_TO_FLOOR_TOLERANCE)
+            self.node.setZ(highestZ+PLAYER_TO_FLOOR_TOLERANCE)
+        if self.readyToJump and self.node.getZ() < highestZ + PLAYER_TO_FLOOR_TOLERANCE_FOR_REJUMP:
+            self.mass.jump(JUMP_FORCE)
         return task.cont
-       
+
 FPS()
-run() 
+run()

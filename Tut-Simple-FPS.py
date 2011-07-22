@@ -9,6 +9,7 @@ from pandac.PandaModules import *
 from direct.gui.OnscreenText import OnscreenText
 import sys
 
+AZERTY = True
 
 class FPS(object):
     """
@@ -111,13 +112,13 @@ class Player(object):
         base.accept( "space" , self.__setattr__,["readyToJump",True])
         base.accept( "space-up" , self.__setattr__,["readyToJump",False])
         base.accept( "s" , self.__setattr__,["walk",self.STOP] )
-        base.accept( "w" , self.__setattr__,["walk",self.FORWARD])
+        base.accept( "z" if AZERTY else "w" , self.__setattr__,["walk",self.FORWARD])
         base.accept( "s" , self.__setattr__,["walk",self.BACK] )
         base.accept( "s-up" , self.__setattr__,["walk",self.STOP] )
-        base.accept( "w-up" , self.__setattr__,["walk",self.STOP] )
-        base.accept( "a" , self.__setattr__,["strafe",self.LEFT])
+        base.accept( "z-up" if AZERTY else "w-up" , self.__setattr__,["walk",self.STOP] )
+        base.accept( "q" if AZERTY else "a" , self.__setattr__,["strafe",self.LEFT])
         base.accept( "d" , self.__setattr__,["strafe",self.RIGHT] )
-        base.accept( "a-up" , self.__setattr__,["strafe",self.STOP] )
+        base.accept( "q-up" if AZERTY else "a-up" , self.__setattr__,["strafe",self.STOP] )
         base.accept( "d-up" , self.__setattr__,["strafe",self.STOP] )
         
     def mouseUpdate(self,task):

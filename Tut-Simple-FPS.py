@@ -27,7 +27,12 @@ class FPS(object):
                     pos=(1.3,-0.95), align=TextNode.ARight, scale = .07)
         OnscreenText(text=__doc__, style=1, fg=(1,1,1,1),
             pos=(-1.3, 0.95), align=TextNode.ALeft, scale = .05)
-        
+        self.fps_tot = 0
+        self.fps_count = 0
+        self.fps_text = OnscreenText(text="FPS %s" % (0,), style=1, fg=(1,1,1,1),
+                    pos=(1.3,-0.55), align=TextNode.ARight, scale = .07)
+        taskMgr.add(self.fps_calculation, 'fps-task')
+
     def initCollision(self):
         """ create the collision system """
         base.cTrav = CollisionTraverser()
@@ -47,7 +52,15 @@ class FPS(object):
     def initPlayer(self):
         """ loads the player and creates all the controls for him"""
         self.node = Player()
-        
+
+    def fps_calculation(self, task):
+        self.fps_tot += globalClock.getDt()
+        self.fps_count += 1
+        if self.fps_count == 100:
+            self.fps_text.setText("FPS %07.3f" % (100./self.fps_tot,))
+            self.fps_tot = 0
+            self.fps_count = 0
+        return task.cont
 class Player(object):
     """
         Player is the main actor in the fps game

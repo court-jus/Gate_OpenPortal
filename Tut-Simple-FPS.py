@@ -116,10 +116,10 @@ class Player(object):
         self.walk = self.STOP
         self.strafe = self.STOP
         self.readyToJump = False
+        self.intoPortal = None
         self.mass = Mass()
         self.loadModel()
-        self.bluePortal = self.newPortal(BLUE)
-        self.orangePortal = self.newPortal(ORANGE)
+        self.makePortals()
         self.setUpCamera()
         self.createCollisions()
         self.attachControls()
@@ -127,6 +127,7 @@ class Player(object):
         taskMgr.add(self.mouseUpdate, 'mouse-task')
         taskMgr.add(self.moveUpdate, 'move-task')
         taskMgr.add(self.jumpUpdate, 'jump-task')
+        #messenger.toggleVerbose()
         self.current_target = None
 
     def loadModel(self):
@@ -134,20 +135,47 @@ class Player(object):
         self.node = NodePath('player')
         self.node.reparentTo(render)
         self.node.setPos(0,0,2)
-        self.node.setScale(.05)
+        self.node.setScale(0.05)
+        #ambient = AmbientLight('ambient')
+        #ambient.setColor((1,0,0,1))
+        #ambientNP = self.node.attachNewNode(ambient)
+        #self.node.setLightOff()
+        #self.node.setLight(ambientNP)
         self.mass.pos = VBase3(self.node.getX(), self.node.getY(), self.node.getZ())
 
-    def newPortal(self, color):
-        por = loader.loadModel("cube")
-        por.reparentTo(render)
-        por.setPos(color[0],color[1],color[2])
-        por.setScale(0.1,0.1,0.1)
-        ambient = AmbientLight('ambient')
-        ambient.setColor(Vec4(*color))
-        ambientNP = por.attachNewNode(ambient)
-        por.setLightOff()
-        por.setLight(ambientNP)
-        return por
+    def makePortals(self):
+        #ambient = AmbientLight('ambient')
+        #ambient.setColor(Vec4(*color))
+        #ambientNP = por.attachNewNode(ambient)
+        #por.setLightOff()
+        #por.setLight(ambientNP)
+        # The BLUE CUBE
+        bpor = loader.loadModel("cube")
+        bpor.reparentTo(render)
+        bpor.setPos(900,0,0)
+        #bpor.setScale(1)
+        bpor.setScale(0.3,0.1,0.5)
+        # The ORANGE CUBE
+        opor = loader.loadModel("cube")
+        opor.reparentTo(render)
+        opor.setPos(900,0,0)
+        opor.setScale(0.3,0.1,0.5)
+        # Make a cubemap at Blue Cube
+        brig = NodePath('brig')
+        bbuffer = base.win.makeCubeMap('bcmap', 256, brig)
+        brig.reparentTo(bpor)
+        # Put this as the Orange Cube texture
+        opor.setTexGen(TextureStage.getDefault(), TexGenAttrib.MWorldCubeMap)
+        opor.setTexture(bbuffer.getTexture())
+        # Do the same for the cube map of Orange Cube
+        #orig = NodePath('orig')
+        #obuffer = base.win.makeCubeMap('ocmap', 256, orig)
+        #orig.reparentTo(opor)
+        # And put it on Blue Cube
+        #bpor.setTexGen(TextureStage.getDefault(), TexGenAttrib.MWorldCubeMap)
+        #bpor.setTexture(obuffer.getTexture())
+        self.bluePortal = bpor
+        self.orangePortal = opor
 
     def setUpCamera(self):
         """ puts camera at the players node """
@@ -178,7 +206,7 @@ class Player(object):
         # Fire the portals
         firingNode = CollisionNode('mouseRay')
         firingNP = base.camera.attachNewNode(firingNode)
-        firingNP.show()
+        #firingNP.show()
         firingNode.setFromCollideMask(BitMask32.bit(0))
         firingNode.setIntoCollideMask(BitMask32.allOff())
         firingRay = CollisionRay()
@@ -188,22 +216,26 @@ class Player(object):
         firingHandler = CollisionHandlerEvent()
         firingHandler.addAgainPattern('piou')
         base.cTrav.addCollider(firingNP, firingHandler)
-        base.cTrav.showCollisions(render)
+        #base.cTrav.showCollisions(render)
 
         # Enter the portals
         cn = CollisionNode('bluePortal')
         np = self.bluePortal.attachNewNode(cn)
         np.show()
         cn.addSolid(CollisionSphere(0,0,0,2))
+        #np.setScale(0.6,0.2,1.0)
+        #opor.setScale(0.3,0.1,0.5)
         h = CollisionHandlerEvent()
-        h.addInPattern('%fn-%in')
+        h.addInPattern('%fn-into-%in')
+        h.addOutPattern('%fn-outof-%in')
         base.cTrav.addCollider(np, h)
         cn = CollisionNode('orangePortal')
         np = self.orangePortal.attachNewNode(cn)
         np.show()
         cn.addSolid(CollisionSphere(0,0,0,2))
         h = CollisionHandlerEvent()
-        h.addInPattern('%fn-%in')
+        h.addInPattern('%fn-into-%in')
+        h.addOutPattern('%fn-outof-%in')
         base.cTrav.addCollider(np, h)
 
 
@@ -220,12 +252,18 @@ class Player(object):
         base.accept( "d" , self.__setattr__,["strafe",self.RIGHT] )
         base.accept( "q-up" if AZERTY else "a-up" , self.__setattr__,["strafe",self.STOP] )
         base.accept( "d-up" , self.__setattr__,["strafe",self.STOP] )
+        base.accept( "c-up" , self.__setattr__,["intoPortal",None] )
+        base.accept( "r-up" , self.resetPosition )
         base.accept( "mouse1" , self.fireBlue )
         base.accept( "mouse3" , self.fireOrange )
         base.accept( "piou" , self.fireUpdate )
-        base.accept( "bluePortal-player" , self.enterPortal, ["blue"] )
-        base.accept( "orangePortal-player" , self.enterPortal, ["orange"] )
+        base.accept( "bluePortal-into-player" , self.enterPortal, ["blue"] )
+        base.accept( "orangePortal-into-player" , self.enterPortal, ["orange"] )
+        base.accept( "bluePortal-outof-player" , self.exitPortal, ["blue"] )
+        base.accept( "orangePortal-outof-player" , self.exitPortal, ["orange"] )
 
+    def resetPosition(self):
+        self.node.setPos(0,0,0)
     def mouseUpdate(self,task):
         """ this task updates the mouse """
         md = base.win.getPointer(0)
@@ -267,12 +305,32 @@ class Player(object):
         self.current_target = what
 
     def fireBlue(self, *arg, **kwargs):
-        self.bluePortal.setPos(self.current_target.getSurfacePoint(render))
+        point = self.current_target.getSurfacePoint(render)
+        normal = self.current_target.getSurfaceNormal(render)
+        self.bluePortal.setPos(point)
+        self.bluePortal.lookAt(point + normal)
 
     def fireOrange(self, *arg, **kwargs):
-        self.orangePortal.setPos(self.current_target.getSurfacePoint(render))
+        point = self.current_target.getSurfacePoint(render)
+        normal = self.current_target.getSurfaceNormal(render)
+        self.orangePortal.setPos(point)
+        self.orangePortal.lookAt(point + normal)
 
     def enterPortal(self, color, collision):
-        self.node.setPos({"orange": self.bluePortal, "blue": self.orangePortal}.get(color).getPos())
+        print "enter",color,self.intoPortal
+        if self.intoPortal is None:
+            self.intoPortal = color
+            portal = {"orange": self.bluePortal, "blue": self.orangePortal}.get(color)
+            otherportal =  {"orange": self.orangePortal, "blue": self.bluePortal}.get(color)
+            print "goto", portal.getPos()
+            self.node.setPos(portal.getPos())
+            newH = portal.getH() - (180 - (otherportal.getH() - self.node.getH()))
+            print "ph",portal.getH(), "oH",otherportal.getH(),"sH",self.node.getH(),"result",newH
+            self.node.setH(newH)
+    def exitPortal(self, color, collision):
+        print "exit",color
+        # When you entered the blue portal, you have to exit the orange one
+        if self.intoPortal != color:
+            self.intoPortal = None
 FPS()
 run()

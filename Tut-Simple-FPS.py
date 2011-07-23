@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-awsd - movement
+qzsd - movement
+c - clear portal status
+e - erase portals
+r - reset player position
 space - jump
 mouse - look around
 """

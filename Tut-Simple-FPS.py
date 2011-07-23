@@ -256,6 +256,7 @@ class Player(object):
         base.accept( "q-up" if AZERTY else "a-up" , self.__setattr__,["strafe",self.STOP] )
         base.accept( "d-up" , self.__setattr__,["strafe",self.STOP] )
         base.accept( "c-up" , self.__setattr__,["intoPortal",None] )
+        base.accept( "e-up" , self.erasePortals )
         base.accept( "r-up" , self.resetPosition )
         base.accept( "mouse1" , self.fireBlue )
         base.accept( "mouse3" , self.fireOrange )
@@ -267,6 +268,10 @@ class Player(object):
 
     def resetPosition(self):
         self.node.setPos(0,0,0)
+    def erasePortals(self):
+        self.bluePortal.setPos(900,0,0)
+        self.orangePortal.setPos(900,0,0)
+        self.intoPortal = None
     def mouseUpdate(self,task):
         """ this task updates the mouse """
         md = base.win.getPointer(0)
@@ -331,7 +336,7 @@ class Player(object):
             print "ph",portal.getH(), "oH",otherportal.getH(),"sH",self.node.getH(),"result",newH
             self.node.setH(newH)
     def exitPortal(self, color, collision):
-        print "exit",color
+        print "exit",color,self.intoPortal
         # When you entered the blue portal, you have to exit the orange one
         if self.intoPortal != color:
             self.intoPortal = None

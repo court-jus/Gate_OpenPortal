@@ -138,7 +138,8 @@ class Player(object):
         """ make the nodepath for player """
         self.node = NodePath('player')
         self.node.reparentTo(render)
-        self.node.setPos(0,0,2)
+        self.origin = (0,0,12)
+        self.node.setPos(*self.origin)
         self.node.setScale(0.05)
         #ambient = AmbientLight('ambient')
         #ambient.setColor((1,0,0,1))

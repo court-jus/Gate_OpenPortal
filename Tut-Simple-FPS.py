@@ -56,7 +56,7 @@ class FPS(object):
               <Collide> { Polyset keep descend }
             in the egg file
         """
-        self.level = loader.loadModel('level')
+        self.level = loader.loadModel('wall')
         self.level.reparentTo(render)
         self.level.setTwoSided(True)
 
@@ -272,8 +272,12 @@ class Player(object):
         base.accept( "bluePortal-outof-player" , self.exitPortal, ["blue"] )
         base.accept( "orangePortal-outof-player" , self.exitPortal, ["orange"] )
 
+    def showPosition(self):
+        print self.node.getPos()
+        print self.mass
     def resetPosition(self):
-        self.node.setPos(0,0,0)
+        self.node.setPos(*self.origin)
+        self.mass.pos = VBase3(*self.origin)
     def erasePortals(self):
         self.bluePortal.setPos(900,0,0)
         self.orangePortal.setPos(900,0,0)

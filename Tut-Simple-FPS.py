@@ -262,6 +262,7 @@ class Player(object):
         base.accept( "c-up" , self.__setattr__,["intoPortal",None] )
         base.accept( "e-up" , self.erasePortals )
         base.accept( "r-up" , self.resetPosition )
+        base.accept( "p-up" , self.showPosition )
         base.accept( "mouse1" , self.fireBlue )
         base.accept( "mouse3" , self.fireOrange )
         base.accept( "setTarget" , self.setTarget )

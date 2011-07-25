@@ -132,6 +132,7 @@ class Player(object):
         taskMgr.add(self.jumpUpdate, 'jump-task')
         #messenger.toggleVerbose()
         self.current_target = None
+        self.canPortal = []
 
     def loadModel(self):
         """ make the nodepath for player """
@@ -217,7 +218,9 @@ class Player(object):
         firingRay.setDirection(0,1,0)
         firingNode.addSolid(firingRay)
         firingHandler = CollisionHandlerEvent()
-        firingHandler.addAgainPattern('piou')
+        firingHandler.addInPattern('setTarget')
+        firingHandler.addAgainPattern('updateTarget')
+        firingHandler.addOutPattern('clearTarget')
         base.cTrav.addCollider(firingNP, firingHandler)
         #base.cTrav.showCollisions(render)
 
@@ -260,7 +263,9 @@ class Player(object):
         base.accept( "r-up" , self.resetPosition )
         base.accept( "mouse1" , self.fireBlue )
         base.accept( "mouse3" , self.fireOrange )
-        base.accept( "piou" , self.fireUpdate )
+        base.accept( "setTarget" , self.setTarget )
+        base.accept( "updateTarget" , self.setTarget )
+        base.accept( "clearTarget" , self.clearTarget )
         base.accept( "bluePortal-into-player" , self.enterPortal, ["blue"] )
         base.accept( "orangePortal-into-player" , self.enterPortal, ["orange"] )
         base.accept( "bluePortal-outof-player" , self.exitPortal, ["blue"] )
@@ -272,6 +277,7 @@ class Player(object):
         self.bluePortal.setPos(900,0,0)
         self.orangePortal.setPos(900,0,0)
         self.intoPortal = None
+        self.canPortal = []
     def mouseUpdate(self,task):
         """ this task updates the mouse """
         md = base.win.getPointer(0)
@@ -309,34 +315,43 @@ class Player(object):
             self.mass.jump(JUMP_FORCE)
         return task.cont
 
-    def fireUpdate(self, what):
+    def setTarget(self, what):
         self.current_target = what
 
+    def clearTarget(self, what):
+        self.current_target = None
+
     def fireBlue(self, *arg, **kwargs):
-        point = self.current_target.getSurfacePoint(render)
-        normal = self.current_target.getSurfaceNormal(render)
-        self.bluePortal.setPos(point)
-        self.bluePortal.lookAt(point + normal)
+       if self.current_target:
+            #print self.current_target
+            point = self.current_target.getSurfacePoint(render)
+            normal = self.current_target.getSurfaceNormal(render)
+            self.bluePortal.setPos(point)
+            self.bluePortal.lookAt(point + normal)
+            self.canPortal.append("blue")
 
     def fireOrange(self, *arg, **kwargs):
-        point = self.current_target.getSurfacePoint(render)
-        normal = self.current_target.getSurfaceNormal(render)
-        self.orangePortal.setPos(point)
-        self.orangePortal.lookAt(point + normal)
+       if self.current_target:
+            #print self.current_target
+            point = self.current_target.getSurfacePoint(render)
+            normal = self.current_target.getSurfaceNormal(render)
+            self.orangePortal.setPos(point)
+            self.orangePortal.lookAt(point + normal)
+            self.canPortal.append("orange")
 
     def enterPortal(self, color, collision):
-        print "enter",color,self.intoPortal
-        if self.intoPortal is None:
+        #print "enter",color,self.intoPortal
+        if self.intoPortal is None and color in self.canPortal:
             self.intoPortal = color
             portal = {"orange": self.bluePortal, "blue": self.orangePortal}.get(color)
             otherportal =  {"orange": self.orangePortal, "blue": self.bluePortal}.get(color)
-            print "goto", portal.getPos()
-            self.node.setPos(portal.getPos())
+            #print "goto", portal.getPos()
+            self.node.setFluidPos(portal.getPos())
             newH = portal.getH() - (180 - (otherportal.getH() - self.node.getH()))
-            print "ph",portal.getH(), "oH",otherportal.getH(),"sH",self.node.getH(),"result",newH
+            #print "ph",portal.getH(), "oH",otherportal.getH(),"sH",self.node.getH(),"result",newH
             self.node.setH(newH)
     def exitPortal(self, color, collision):
-        print "exit",color,self.intoPortal
+        #print "exit",color,self.intoPortal
         # When you entered the blue portal, you have to exit the orange one
         if self.intoPortal != color:
             self.intoPortal = None

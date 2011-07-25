@@ -22,6 +22,14 @@ PLAYER_TO_FLOOR_TOLERANCE_FOR_REJUMP = 1
 ORANGE = (242/255., 181/255., 75/255.,1)
 BLUE = (89/255.,100/255.,122/255.,1)
 
+COLLISIONMASKS = {
+    'player': BitMask32.bit(1),
+    'portals': BitMask32.bit(2),
+    'mouseRay': BitMask32.bit(3),
+    'geometry': GeomNode.getDefaultCollideMask(),
+}
+print COLLISIONMASKS
+
 class FPS(object):
     """
         This is a very simple FPS like -
@@ -56,7 +64,7 @@ class FPS(object):
               <Collide> { Polyset keep descend }
             in the egg file
         """
-        self.level = loader.loadModel('wall')
+        self.level = loader.loadModel('models/wall')
         self.level.reparentTo(render)
         self.level.setTwoSided(True)
 
@@ -133,6 +141,7 @@ class Player(object):
         #messenger.toggleVerbose()
         self.current_target = None
         self.canPortal = []
+        self.canSetTarget = True
 
     def loadModel(self):
         """ make the nodepath for player """
@@ -192,6 +201,8 @@ class Player(object):
     def createCollisions(self):
         """ create a collision solid and ray for the player """
         cn = CollisionNode('player')
+        cn.setFromCollideMask(COLLISIONMASKS['player'])
+        cn.setIntoCollideMask(COLLISIONMASKS['geometry'] | COLLISIONMASKS['portals'])
         cn.addSolid(CollisionSphere(0,0,0,3))
         solid = self.node.attachNewNode(cn)
         base.cTrav.addCollider(solid,base.pusher)
@@ -201,9 +212,9 @@ class Player(object):
         ray.setOrigin(0,0,-.2)
         ray.setDirection(0,0,-1)
         cn = CollisionNode('playerRay')
+        cn.setFromCollideMask(COLLISIONMASKS['player'])
+        cn.setIntoCollideMask(COLLISIONMASKS['geometry'])
         cn.addSolid(ray)
-        cn.setFromCollideMask(BitMask32.bit(0))
-        cn.setIntoCollideMask(BitMask32.allOff())
         solid = self.node.attachNewNode(cn)
         self.nodeGroundHandler = CollisionHandlerQueue()
         base.cTrav.addCollider(solid, self.nodeGroundHandler)
@@ -212,21 +223,20 @@ class Player(object):
         firingNode = CollisionNode('mouseRay')
         firingNP = base.camera.attachNewNode(firingNode)
         #firingNP.show()
-        firingNode.setFromCollideMask(BitMask32.bit(0))
-        firingNode.setIntoCollideMask(BitMask32.allOff())
+        firingNode.setFromCollideMask(COLLISIONMASKS['mouseRay'])
+        firingNode.setIntoCollideMask(COLLISIONMASKS['geometry'])
         firingRay = CollisionRay()
         firingRay.setOrigin(0,0,0)
         firingRay.setDirection(0,1,0)
         firingNode.addSolid(firingRay)
-        firingHandler = CollisionHandlerEvent()
-        firingHandler.addInPattern('setTarget')
-        firingHandler.addAgainPattern('updateTarget')
-        firingHandler.addOutPattern('clearTarget')
-        base.cTrav.addCollider(firingNP, firingHandler)
+        self.firingHandler = CollisionHandlerQueue()
+        base.cTrav.addCollider(firingNP, self.firingHandler)
         #base.cTrav.showCollisions(render)
 
         # Enter the portals
         cn = CollisionNode('bluePortal')
+        cn.setFromCollideMask(COLLISIONMASKS['portals'])
+        cn.setIntoCollideMask(BitMask32.allOff())
         np = self.bluePortal.attachNewNode(cn)
         np.show()
         cn.addSolid(CollisionSphere(0,0,0,2))
@@ -237,6 +247,8 @@ class Player(object):
         h.addOutPattern('%fn-outof-%in')
         base.cTrav.addCollider(np, h)
         cn = CollisionNode('orangePortal')
+        cn.setFromCollideMask(COLLISIONMASKS['portals'])
+        cn.setIntoCollideMask(COLLISIONMASKS['player'])
         np = self.orangePortal.attachNewNode(cn)
         np.show()
         cn.addSolid(CollisionSphere(0,0,0,2))
@@ -265,9 +277,6 @@ class Player(object):
         base.accept( "p-up" , self.showPosition )
         base.accept( "mouse1" , self.fireBlue )
         base.accept( "mouse3" , self.fireOrange )
-        base.accept( "setTarget" , self.setTarget )
-        base.accept( "updateTarget" , self.setTarget )
-        base.accept( "clearTarget" , self.clearTarget )
         base.accept( "bluePortal-into-player" , self.enterPortal, ["blue"] )
         base.accept( "orangePortal-into-player" , self.enterPortal, ["orange"] )
         base.accept( "bluePortal-outof-player" , self.exitPortal, ["blue"] )
@@ -292,6 +301,7 @@ class Player(object):
         if base.win.movePointer(0, base.win.getXSize()/2, base.win.getYSize()/2):
             self.node.setH(self.node.getH() -  (x - base.win.getXSize()/2)*0.1)
             base.camera.setP(base.camera.getP() - (y - base.win.getYSize()/2)*0.1)
+            self.canSetTarget = True
         return task.cont
 
     def moveUpdate(self,task):
@@ -308,12 +318,13 @@ class Player(object):
         for i in range(self.nodeGroundHandler.getNumEntries()):
             entry = self.nodeGroundHandler.getEntry(i)
             z = entry.getSurfacePoint(render).getZ()
-            if z > highestZ and entry.getIntoNode().getName() == "Cube":
+            if z > highestZ and entry.getIntoNode().getName() in ( "CollisionStuff", "Plane", "Cube" ):
                 highestZ = z
         # gravity effects and jumps
         self.mass.simulate(globalClock.getDt())
         self.node.setZ(self.mass.pos.getZ())
         if highestZ > self.node.getZ()-PLAYER_TO_FLOOR_TOLERANCE:
+            print "zero"
             self.mass.zero()
             self.mass.pos.setZ(highestZ+PLAYER_TO_FLOOR_TOLERANCE)
             self.node.setZ(highestZ+PLAYER_TO_FLOOR_TOLERANCE)
@@ -321,41 +332,31 @@ class Player(object):
             self.mass.jump(JUMP_FORCE)
         return task.cont
 
-    def setTarget(self, what):
-        self.current_target = what
-
-    def clearTarget(self, what):
-        self.current_target = None
+    def firePortal(self, name, node):
+        self.firingHandler.sortEntries()
+        if self.nodeGroundHandler.getNumEntries() > 0:
+            closest = self.firingHandler.getEntry(0)
+            point = closest.getSurfacePoint(render)
+            normal = closest.getSurfaceNormal(render)
+            node.setPos(point)
+            node.lookAt(point + normal)
+            self.canPortal.append(name)
 
     def fireBlue(self, *arg, **kwargs):
-       if self.current_target:
-            #print self.current_target
-            point = self.current_target.getSurfacePoint(render)
-            normal = self.current_target.getSurfaceNormal(render)
-            self.bluePortal.setPos(point)
-            self.bluePortal.lookAt(point + normal)
-            self.canPortal.append("blue")
+        self.firePortal("blue", self.bluePortal)
 
     def fireOrange(self, *arg, **kwargs):
-       if self.current_target:
-            #print self.current_target
-            point = self.current_target.getSurfacePoint(render)
-            normal = self.current_target.getSurfaceNormal(render)
-            self.orangePortal.setPos(point)
-            self.orangePortal.lookAt(point + normal)
-            self.canPortal.append("orange")
+        self.firePortal("orange", self.orangePortal)
 
     def enterPortal(self, color, collision):
-        #print "enter",color,self.intoPortal
         if self.intoPortal is None and color in self.canPortal:
             self.intoPortal = color
             portal = {"orange": self.bluePortal, "blue": self.orangePortal}.get(color)
             otherportal =  {"orange": self.orangePortal, "blue": self.bluePortal}.get(color)
-            #print "goto", portal.getPos()
             self.node.setFluidPos(portal.getPos())
             newH = portal.getH() - (180 - (otherportal.getH() - self.node.getH()))
-            #print "ph",portal.getH(), "oH",otherportal.getH(),"sH",self.node.getH(),"result",newH
             self.node.setH(newH)
+            print "entered"
     def exitPortal(self, color, collision):
         #print "exit",color,self.intoPortal
         # When you entered the blue portal, you have to exit the orange one

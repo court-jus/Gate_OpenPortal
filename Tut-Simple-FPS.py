@@ -324,7 +324,6 @@ class Player(object):
         self.mass.simulate(globalClock.getDt())
         self.node.setZ(self.mass.pos.getZ())
         if highestZ > self.node.getZ()-PLAYER_TO_FLOOR_TOLERANCE:
-            print "zero"
             self.mass.zero()
             self.mass.pos.setZ(highestZ+PLAYER_TO_FLOOR_TOLERANCE)
             self.node.setZ(highestZ+PLAYER_TO_FLOOR_TOLERANCE)

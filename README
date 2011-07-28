@@ -1,0 +1,21 @@
+About
+#####
+
+My project is to create an OpenSource and Free game inspired by Portal
+
+News
+####
+
+The Proof Of Concept is ready and you can get it on my github. It is freely inspired by treeform's template for making FPS on the Panda3D engine.
+
+You'll need Panda3D to run the program. I'm using the .deb version on my Ubuntu.
+
+Install
+#######
+
+wget "http://www.panda3d.org/download/panda3d-1.7.2/panda3d1.7_1.7.2~maverick_i386.deb"
+dpkg -i panda3d1.7_1.7.2~maverick_i386.deb
+# Check and solve dependecies if needed
+git clone https://court-jus@github.com/court-jus/simple-fps.git
+cd simple-fps
+ppython Tut-Simple-FPS.py

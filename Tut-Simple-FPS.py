@@ -29,7 +29,6 @@ COLLISIONMASKS = {
     'mouseRay': BitMask32.bit(3),
     'geometry': GeomNode.getDefaultCollideMask(),
 }
-print COLLISIONMASKS
 
 class FPS(object):
     """
@@ -377,7 +376,6 @@ class Player(object):
             self.node.setFluidPos(portal.getPos())
             newH = portal.getH() - (180 - (otherportal.getH() - self.node.getH()))
             self.node.setH(newH)
-            print "entered"
     def exitPortal(self, color, collision):
         #print "exit",color,self.intoPortal
         # When you entered the blue portal, you have to exit the orange one

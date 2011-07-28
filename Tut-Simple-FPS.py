@@ -354,7 +354,7 @@ class Player(object):
 
     def firePortal(self, name, node):
         self.firingHandler.sortEntries()
-        if self.nodeGroundHandler.getNumEntries() > 0:
+        if self.firingHandler.getNumEntries() > 0:
             closest = self.firingHandler.getEntry(0)
             point = closest.getSurfacePoint(render)
             normal = closest.getSurfaceNormal(render)

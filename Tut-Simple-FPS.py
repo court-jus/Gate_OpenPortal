@@ -69,6 +69,27 @@ class FPS(object):
         self.level.reparentTo(render)
         self.level.setTwoSided(True)
 
+        # Add two cubes to see via the portals
+        c = loader.loadModel("cube")
+        c.setPos(0,0,1)
+        c.setScale(0.3)
+        a = AmbientLight('ambient')
+        a.setColor((1,0,0,1))
+        aNP = c.attachNewNode(a)
+        c.setLightOff()
+        c.setLight(aNP)
+        c.reparentTo(self.level)
+
+        c = loader.loadModel("cube")
+        c.setPos(0,10,1)
+        c.setScale(0.3)
+        a = AmbientLight('ambient')
+        a.setColor((0,1,0,1))
+        aNP = c.attachNewNode(a)
+        c.setLightOff()
+        c.setLight(aNP)
+        c.reparentTo(self.level)
+
     def initPlayer(self):
         """ loads the player and creates all the controls for him"""
         self.node = Player()
@@ -130,6 +151,9 @@ class Player(object):
         self.readyToJump = False
         self.intoPortal = None
         self.mass = Mass()
+        self.origin = (0,0,12)
+        self.bporigin = (10,0,1)
+        self.oporigin = (-10,0,1)
         self.loadModel()
         self.makePortals()
         self.setUpCamera()
@@ -148,7 +172,6 @@ class Player(object):
         """ make the nodepath for player """
         self.node = NodePath('player')
         self.node.reparentTo(render)
-        self.origin = (0,0,12)
         self.node.setPos(*self.origin)
         self.node.setScale(0.05)
         #ambient = AmbientLight('ambient')
@@ -159,36 +182,34 @@ class Player(object):
         self.mass.pos = VBase3(self.node.getX(), self.node.getY(), self.node.getZ())
 
     def makePortals(self):
-        #ambient = AmbientLight('ambient')
-        #ambient.setColor(Vec4(*color))
-        #ambientNP = por.attachNewNode(ambient)
-        #por.setLightOff()
-        #por.setLight(ambientNP)
         # The BLUE CUBE
         bpor = loader.loadModel("cube")
         bpor.reparentTo(render)
-        bpor.setPos(900,0,0)
-        #bpor.setScale(1)
+        bpor.setPos(*self.bporigin)
         bpor.setScale(0.3,0.1,0.5)
+        # The BLUE CUBE's camera
+        bbuffer = base.win.makeTextureBuffer("B Buffer", 512, 512)
+        bbuffer.setSort(-100)
+        bcamera = base.makeCamera(bbuffer)
+        bcamera.reparentTo(bpor)
+        bcamera.node().setScene(render)
+
         # The ORANGE CUBE
         opor = loader.loadModel("cube")
         opor.reparentTo(render)
-        opor.setPos(900,0,0)
+        opor.setPos(*self.oporigin)
         opor.setScale(0.3,0.1,0.5)
-        # Make a cubemap at Blue Cube
-        brig = NodePath('brig')
-        bbuffer = base.win.makeCubeMap('bcmap', 256, brig)
-        brig.reparentTo(bpor)
-        # Put this as the Orange Cube texture
-        opor.setTexGen(TextureStage.getDefault(), TexGenAttrib.MWorldCubeMap)
+        # The ORANGE CUBE's camera
+        obuffer = base.win.makeTextureBuffer("O Buffer", 512, 512)
+        obuffer.setSort(-100)
+        ocamera = base.makeCamera(obuffer)
+        ocamera.reparentTo(opor)
+        ocamera.node().setScene(render)
+
+        # Assign the textures
+        bpor.setTexture(obuffer.getTexture())
         opor.setTexture(bbuffer.getTexture())
-        # Do the same for the cube map of Orange Cube
-        #orig = NodePath('orig')
-        #obuffer = base.win.makeCubeMap('ocmap', 256, orig)
-        #orig.reparentTo(opor)
-        # And put it on Blue Cube
-        #bpor.setTexGen(TextureStage.getDefault(), TexGenAttrib.MWorldCubeMap)
-        #bpor.setTexture(obuffer.getTexture())
+        # Store the portals
         self.bluePortal = bpor
         self.orangePortal = opor
 
@@ -290,8 +311,8 @@ class Player(object):
         self.node.setPos(*self.origin)
         self.mass.pos = VBase3(*self.origin)
     def erasePortals(self):
-        self.bluePortal.setPos(900,0,0)
-        self.orangePortal.setPos(900,0,0)
+        self.bluePortal.setPos(*self.bporigin)
+        self.orangePortal.setPos(*self.oporigin)
         self.intoPortal = None
         self.canPortal = []
     def mouseUpdate(self,task):

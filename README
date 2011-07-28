@@ -16,6 +16,6 @@ Install
 wget http://www.panda3d.org/download/panda3d-1.7.2/panda3d1.7_1.7.2~maverick_i386.deb
 dpkg -i panda3d1.7_1.7.2~maverick_i386.deb
 # Check and solve dependecies if needed
-git clone https://court-jus@github.com/court-jus/simple-fps.git
+git clone https://github.com/court-jus/simple-fps.git
 cd simple-fps
 ppython Tut-Simple-FPS.py

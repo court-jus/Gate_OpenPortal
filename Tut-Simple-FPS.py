@@ -185,7 +185,7 @@ class Player(object):
         bpor = loader.loadModel("cube")
         bpor.reparentTo(render)
         bpor.setPos(*self.bporigin)
-        bpor.setScale(0.3,0.1,0.5)
+        bpor.setScale(0.3,0.02,0.5)
         # The BLUE CUBE's camera
         bbuffer = base.win.makeTextureBuffer("B Buffer", 512, 512)
         bbuffer.setSort(-100)
@@ -197,7 +197,7 @@ class Player(object):
         opor = loader.loadModel("cube")
         opor.reparentTo(render)
         opor.setPos(*self.oporigin)
-        opor.setScale(0.3,0.1,0.5)
+        opor.setScale(0.3,0.02,0.5)
         # The ORANGE CUBE's camera
         obuffer = base.win.makeTextureBuffer("O Buffer", 512, 512)
         obuffer.setSort(-100)

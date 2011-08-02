@@ -150,7 +150,7 @@ class Player(object):
         self.readyToJump = False
         self.intoPortal = None
         self.mass = Mass()
-        self.origin = (0,0,12)
+        self.origin = (0,3,3)
         self.bporigin = (10,0,1)
         self.oporigin = (-10,0,1)
         self.loadModel()

@@ -374,7 +374,8 @@ class Player(object):
             self.intoPortal = color
             portal = {"orange": self.bluePortal, "blue": self.orangePortal}.get(color)
             otherportal =  {"orange": self.orangePortal, "blue": self.bluePortal}.get(color)
-            self.node.setFluidPos(portal.getPos())
+            self.node.setPos(portal.getPos())
+            self.mass.pos = self.node.getPos()
             newH = portal.getH() - (180 - (self.node.getH() - otherportal.getH()))
             self.node.setH(newH)
     def exitPortal(self, color, collision):

@@ -376,8 +376,11 @@ class Player(object):
             otherportal =  {"orange": self.orangePortal, "blue": self.bluePortal}.get(color)
             self.node.setPos(portal.getPos())
             self.mass.pos = self.node.getPos()
-            newH = portal.getH() - (180 - (self.node.getH() - otherportal.getH()))
-            self.node.setH(newH)
+            # New HPR is relative to 'new' portal but it the 'same' value
+            # as the old HPR seen from the 'other' portal
+            self.node.setHpr(portal, self.node.getHpr(otherportal))
+            # Make half a turn
+            self.node.setH(180 - self.node.getH())
     def exitPortal(self, color, collision):
         #print "exit",color,self.intoPortal
         # When you entered the blue portal, you have to exit the orange one

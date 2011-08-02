@@ -218,6 +218,7 @@ class Player(object):
         pl.setFov(70)
         base.cam.node().setLens(pl)
         base.camera.reparentTo(self.node)
+        base.camLens.setFov(100)
 
     def createCollisions(self):
         """ create a collision solid and ray for the player """

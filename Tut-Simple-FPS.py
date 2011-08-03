@@ -190,6 +190,8 @@ class Player(object):
         bbuffer = base.win.makeTextureBuffer("B Buffer", 512, 512)
         bbuffer.setSort(-100)
         bcamera = base.makeCamera(bbuffer)
+        bcamera.node().getLens().setAspectRatio(0.3/0.5)
+        bcamera.node().getLens().setFov(15)
         bcamera.reparentTo(bpor)
         bcamera.node().setScene(render)
 
@@ -202,15 +204,19 @@ class Player(object):
         obuffer = base.win.makeTextureBuffer("O Buffer", 512, 512)
         obuffer.setSort(-100)
         ocamera = base.makeCamera(obuffer)
+        ocamera.node().getLens().setAspectRatio(0.3/0.5)
+        ocamera.node().getLens().setFov(15)
         ocamera.reparentTo(opor)
         ocamera.node().setScene(render)
 
         # Assign the textures
         bpor.setTexture(obuffer.getTexture())
         opor.setTexture(bbuffer.getTexture())
-        # Store the portals
+        # Store the portals and theirs cameras
         self.bluePortal = bpor
         self.orangePortal = opor
+        self.bcamera = bcamera
+        self.ocamera = ocamera
 
     def setUpCamera(self):
         """ puts camera at the players node """
@@ -328,6 +334,8 @@ class Player(object):
             self.node.setH(self.node.getH() -  (x - base.win.getXSize()/2)*0.1)
             base.camera.setP(base.camera.getP() - (y - base.win.getYSize()/2)*0.1)
             self.canSetTarget = True
+            self.bcamera.lookAt(self.bluePortal, self.node.getPos(self.orangePortal))
+            self.ocamera.lookAt(self.orangePortal, self.node.getPos(self.bluePortal))
         return task.cont
 
     def moveUpdate(self,task):
@@ -382,8 +390,9 @@ class Player(object):
             self.mass.pos = self.node.getPos()
             # New HPR is relative to 'new' portal but it the 'same' value
             # as the old HPR seen from the 'other' portal
-            self.node.setHpr(portal, self.node.getHpr(otherportal))
-            # Make half a turn
+            self.node.setH(portal, self.node.getH(otherportal))
+            self.node.setR(portal, self.node.getR(otherportal))
+            # Make half a turn (only if we are going forward ?)
             self.node.setH(180 - self.node.getH())
     def exitPortal(self, color, collision):
         #print "exit",color,self.intoPortal

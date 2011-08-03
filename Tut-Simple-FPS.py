@@ -297,6 +297,7 @@ class Player(object):
         base.accept( "e-up" , self.erasePortals )
         base.accept( "r-up" , self.resetPosition )
         base.accept( "p-up" , self.showPosition )
+        base.accept( "b-up" , self.deBug )
         base.accept( "mouse1" , self.fireBlue )
         base.accept( "mouse3" , self.fireOrange )
         base.accept( "bluePortal-into-player" , self.enterPortal, ["blue"] )
@@ -304,6 +305,9 @@ class Player(object):
         base.accept( "bluePortal-outof-player" , self.exitPortal, ["blue"] )
         base.accept( "orangePortal-outof-player" , self.exitPortal, ["orange"] )
 
+    def deBug(self):
+        import pdb
+        pdb.set_trace()
     def showPosition(self):
         print self.node.getPos()
         print self.mass

@@ -1,0 +1,5 @@
+#VIM
+.*sw*
+
+#PYC
+*.pyc

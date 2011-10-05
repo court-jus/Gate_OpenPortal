@@ -3,3 +3,5 @@
 
 #PYC
 *.pyc
+
+ignored_stuff/

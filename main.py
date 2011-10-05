@@ -7,7 +7,7 @@ from Gate.player import Player
 def main():
     base = ShowBase()
     fps = FPS(base)
-    player = Player(base, FPS)
+    player = Player(base, fps)
     base.run()
 
 if __name__ == "__main__":

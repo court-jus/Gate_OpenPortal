@@ -12,9 +12,10 @@ PLAYER_TO_FLOOR_TOLERANCE_FOR_REJUMP = 1
 ORANGE = (242/255., 181/255., 75/255.,1)
 BLUE = (89/255.,100/255.,122/255.,1)
 
-COLLISIONMASKS = {
-    'player': BitMask32.bit(1),
-    'portals': BitMask32.bit(2),
-    'mouseRay': BitMask32.bit(3),
-    'geometry': GeomNode.getDefaultCollideMask(),
-}
+CMASK_PLAYER,\
+CMASK_CUBES,\
+CMASK_LEVEL,\
+CMASK_PORTALS,\
+CMASK_MOUSERAY,\
+    = [BitMask32.bit(n) for n in range(1,6)]
+CMASK_GEOMETRY = GeomNode.getDefaultCollideMask()

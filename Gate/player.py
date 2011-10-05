@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
 
-from panda3d.core import Vec3, VBase3, BitMask32
+from panda3d.core import Vec3, VBase3, BitMask32, Quat, Vec4
 from panda3d.core import NodePath
 from panda3d.core import CollisionNode, CollisionSphere, CollisionRay, CollisionHandlerQueue, CollisionHandlerEvent
 from Gate.constants import *
 from Gate.physics.gravity import Mass
 from functools import wraps
+from panda3d.ode import OdeWorld, OdeBody, OdeMass, OdeSimpleSpace, OdeJointGroup, OdeBoxGeom, OdeTriMeshData, OdeTriMeshGeom
 
 def oldpostracker(fn):
     @wraps(fn)
     def wrapper(self, *args, **kwargs):
         oldpos = self.node.getPos()
         result = fn(self, *args, **kwargs)
+        return result
         if oldpos.getX() != self.node.getX() or oldpos.getY() != self.node.getY():
             print "CHANGED",oldpos, self.node.getPos(),"IN",wrapper
         return result
@@ -37,8 +39,8 @@ class Player(object):
         self.intoPortal = None
         self.mass = Mass()
         self.origin = (0,3,3)
-        self.bporigin = (0,3,0)
-        self.oporigin = (0,3,15)
+        self.bporigin = (0,1,0)
+        self.oporigin = (0,1,15)
         self.current_target = None
         self.canPortal = []
         self.canSetTarget = True
@@ -46,7 +48,8 @@ class Player(object):
         self.loadModel()
         self.makePortals()
         self.setUpCamera()
-        self.createCollisions()
+        #self.createCollisions()
+        self.odeSetup(self.fps.world, self.fps.space)
         self.attachControls()
 
     def loadModel(self):
@@ -108,8 +111,8 @@ class Player(object):
     def createCollisions(self):
         """ create a collision solid and ray for the player """
         cn = CollisionNode('player')
-        cn.setFromCollideMask(COLLISIONMASKS['player'])
-        cn.setIntoCollideMask(COLLISIONMASKS['geometry'] | COLLISIONMASKS['portals'])
+        cn.setFromCollideMask(CMASK_PLAYER)
+        cn.setIntoCollideMask(CMASK_GEOMETRY | CMASK_PORTALS)
         cn.addSolid(CollisionSphere(0,0,0,3))
         solid = self.node.attachNewNode(cn)
         # TODO : find a way to remove that, it's the cause of the little
@@ -121,8 +124,8 @@ class Player(object):
         ray.setOrigin(0,0,-.2)
         ray.setDirection(0,0,-1)
         cn = CollisionNode('playerRay')
-        cn.setFromCollideMask(COLLISIONMASKS['player'])
-        cn.setIntoCollideMask(COLLISIONMASKS['geometry'])
+        cn.setFromCollideMask(CMASK_PLAYER)
+        cn.setIntoCollideMask(CMASK_GEOMETRY)
         cn.addSolid(ray)
         solid = self.node.attachNewNode(cn)
         self.nodeGroundHandler = CollisionHandlerQueue()
@@ -131,8 +134,8 @@ class Player(object):
         # Fire the portals
         firingNode = CollisionNode('mouseRay')
         firingNP = self.base.camera.attachNewNode(firingNode)
-        firingNode.setFromCollideMask(COLLISIONMASKS['mouseRay'])
-        firingNode.setIntoCollideMask(COLLISIONMASKS['geometry'])
+        firingNode.setFromCollideMask(CMASK_MOUSERAY)
+        firingNode.setIntoCollideMask(CMASK_GEOMETRY)
         firingRay = CollisionRay()
         firingRay.setOrigin(0,0,0)
         firingRay.setDirection(0,1,0)
@@ -142,7 +145,7 @@ class Player(object):
 
         # Enter the portals
         cn = CollisionNode('bluePortal')
-        cn.setFromCollideMask(COLLISIONMASKS['portals'])
+        cn.setFromCollideMask(CMASK_PORTALS)
         cn.setIntoCollideMask(BitMask32.allOff())
         np = self.bluePortal.attachNewNode(cn)
         cn.addSolid(CollisionSphere(0,0,0,2))
@@ -151,7 +154,7 @@ class Player(object):
         h.addOutPattern('%fn-outof-%in')
         self.base.cTrav.addCollider(np, h)
         cn = CollisionNode('orangePortal')
-        cn.setFromCollideMask(COLLISIONMASKS['portals'])
+        cn.setFromCollideMask(CMASK_PORTALS)
         cn.setIntoCollideMask(BitMask32.allOff())
         np = self.orangePortal.attachNewNode(cn)
         cn.addSolid(CollisionSphere(0,0,0,2))
@@ -190,6 +193,7 @@ class Player(object):
         taskMgr.add(self.mouseUpdate, 'mouse-task')
         taskMgr.add(self.moveUpdate, 'move-task')
         taskMgr.add(self.jumpUpdate, 'jump-task')
+        taskMgr.add(self.odeStep, 'ode-task')
 
     def deBug(self):
         import pdb
@@ -205,6 +209,28 @@ class Player(object):
         self.orangePortal.setPos(*self.oporigin)
         self.intoPortal = None
         self.canPortal = []
+
+    def odeSetup(self, world, space):
+        self.odebody = OdeBody(world)
+        self.odebody.setPosition(self.node.getPos(render))
+        self.odebody.setQuaternion(self.node.getQuat(render))
+
+        myMass = OdeMass()
+        myMass.setBox(11340, 1,1,1)
+
+        self.odebody.setMass(myMass)
+
+        boxGeom = OdeBoxGeom(space, 1,1,1)
+        boxGeom.setCollideBits(CMASK_LEVEL | CMASK_LEVEL)
+        boxGeom.setCategoryBits(CMASK_PLAYER)
+        boxGeom.setBody(self.odebody)
+
+    @oldpostracker
+    def odeStep(self, task):
+        self.node.setPosQuat(render, self.odebody.getPosition(), Quat(self.odebody.getQuaternion()))
+        #self.node.setPos(render, self.odebody.getPosition())
+        return task.cont
+
     @oldpostracker
     def mouseUpdate(self,task):
         """ this task updates the mouse """
@@ -218,6 +244,8 @@ class Player(object):
             self.bcamera.lookAt(self.bluePortal, self.node.getPos(self.orangePortal))
             self.ocamera.lookAt(self.orangePortal, self.node.getPos(self.bluePortal))
             self.canPortal = ['blue','orange']
+            self.odebody.setPosition(self.node.getPos(render))
+            self.odebody.setQuaternion(self.node.getQuat(render))
         return task.cont
 
     @oldpostracker
@@ -232,19 +260,19 @@ class Player(object):
     def jumpUpdate(self,task):
         """ this task simulates gravity and makes the player jump """
         # get the highest Z from the down casting ray
-        highestZ = -100
-        for i in range(self.nodeGroundHandler.getNumEntries()):
-            entry = self.nodeGroundHandler.getEntry(i)
-            z = entry.getSurfacePoint(render).getZ()
-            if z > highestZ and entry.getIntoNode().getName() in ( "CollisionStuff", "Plane", "Cube" ):
-                highestZ = z
+        #highestZ = -100
+        #for i in range(self.nodeGroundHandler.getNumEntries()):
+        #    entry = self.nodeGroundHandler.getEntry(i)
+        #    z = entry.getSurfacePoint(render).getZ()
+        #    if z > highestZ and entry.getIntoNode().getName() in ( "CollisionStuff", "Plane", "Cube" ):
+        #        highestZ = z
         # gravity effects and jumps
-        self.mass.simulate(globalClock.getDt())
-        self.node.setZ(self.mass.pos.getZ())
-        if highestZ > self.node.getZ()-PLAYER_TO_FLOOR_TOLERANCE:
-            self.mass.zero()
-            self.mass.pos.setZ(highestZ+PLAYER_TO_FLOOR_TOLERANCE)
-            self.node.setZ(highestZ+PLAYER_TO_FLOOR_TOLERANCE)
+        #self.mass.simulate(globalClock.getDt())
+        #self.node.setZ(self.mass.pos.getZ())
+        #if highestZ > self.node.getZ()-PLAYER_TO_FLOOR_TOLERANCE:
+        #    self.mass.zero()
+        #    self.mass.pos.setZ(highestZ+PLAYER_TO_FLOOR_TOLERANCE)
+        #    self.node.setZ(highestZ+PLAYER_TO_FLOOR_TOLERANCE)
         if self.readyToJump and self.node.getZ() < highestZ + PLAYER_TO_FLOOR_TOLERANCE_FOR_REJUMP:
             self.mass.jump(JUMP_FORCE)
         return task.cont

@@ -38,7 +38,7 @@ class Player(object):
         self.readyToJump = False
         self.intoPortal = None
         self.mass = Mass()
-        self.origin = (0,3,3)
+        self.origin = (3,3,3)
         self.bporigin = (0,1,0)
         self.oporigin = (0,1,15)
         self.current_target = None
@@ -48,7 +48,7 @@ class Player(object):
         self.loadModel()
         self.makePortals()
         self.setUpCamera()
-        #self.createCollisions()
+        self.createCollisions()
         self.odeSetup(self.fps.world, self.fps.space)
         self.attachControls()
 
@@ -109,27 +109,26 @@ class Player(object):
         self.base.camLens.setFov(100)
 
     def createCollisions(self):
-        """ create a collision solid and ray for the player """
-        cn = CollisionNode('player')
-        cn.setFromCollideMask(CMASK_PLAYER)
-        cn.setIntoCollideMask(CMASK_GEOMETRY | CMASK_PORTALS)
-        cn.addSolid(CollisionSphere(0,0,0,3))
-        solid = self.node.attachNewNode(cn)
+        #cn = CollisionNode('player')
+        #cn.setFromCollideMask(CMASK_PLAYER)
+        #cn.setIntoCollideMask(CMASK_GEOMETRY | CMASK_PORTALS)
+        #cn.addSolid(CollisionSphere(0,0,0,3))
+        #solid = self.node.attachNewNode(cn)
         # TODO : find a way to remove that, it's the cause of the little
         # "push me left" effect we see sometime when exiting a portal
-        self.base.cTrav.addCollider(solid,self.base.pusher)
-        self.base.pusher.addCollider(solid,self.node, self.base.drive.node())
+        #self.base.cTrav.addCollider(solid,self.base.pusher)
+        #self.base.pusher.addCollider(solid,self.node, self.base.drive.node())
         # init players floor collisions
-        ray = CollisionRay()
-        ray.setOrigin(0,0,-.2)
-        ray.setDirection(0,0,-1)
-        cn = CollisionNode('playerRay')
-        cn.setFromCollideMask(CMASK_PLAYER)
-        cn.setIntoCollideMask(CMASK_GEOMETRY)
-        cn.addSolid(ray)
-        solid = self.node.attachNewNode(cn)
-        self.nodeGroundHandler = CollisionHandlerQueue()
-        self.base.cTrav.addCollider(solid, self.nodeGroundHandler)
+        #ray = CollisionRay()
+        #ray.setOrigin(0,0,-.2)
+        #ray.setDirection(0,0,-1)
+        #cn = CollisionNode('playerRay')
+        #cn.setFromCollideMask(CMASK_PLAYER)
+        #cn.setIntoCollideMask(CMASK_GEOMETRY)
+        #cn.addSolid(ray)
+        #solid = self.node.attachNewNode(cn)
+        #self.nodeGroundHandler = CollisionHandlerQueue()
+        #self.base.cTrav.addCollider(solid, self.nodeGroundHandler)
 
         # Fire the portals
         firingNode = CollisionNode('mouseRay')
@@ -215,15 +214,15 @@ class Player(object):
         self.odebody.setPosition(self.node.getPos(render))
         self.odebody.setQuaternion(self.node.getQuat(render))
 
-        myMass = OdeMass()
-        myMass.setBox(11340, 1,1,1)
+        self.odeMass = OdeMass()
+        self.odeMass.setBox(11340, 1,1,1)
 
-        self.odebody.setMass(myMass)
+        self.odebody.setMass(self.odeMass)
 
-        boxGeom = OdeBoxGeom(space, 1,1,1)
-        boxGeom.setCollideBits(CMASK_LEVEL | CMASK_LEVEL)
-        boxGeom.setCategoryBits(CMASK_PLAYER)
-        boxGeom.setBody(self.odebody)
+        self.odeGeom = OdeBoxGeom(space, 1,1,1)
+        self.odeGeom.setCollideBits(CMASK_LEVEL | CMASK_LEVEL)
+        self.odeGeom.setCategoryBits(CMASK_PLAYER)
+        self.odeGeom.setBody(self.odebody)
 
     @oldpostracker
     def odeStep(self, task):
@@ -239,6 +238,8 @@ class Player(object):
         y = md.getY()
         if self.base.win.movePointer(0, self.base.win.getXSize()/2, self.base.win.getYSize()/2):
             self.node.setH(self.node.getH() -  (x - self.base.win.getXSize()/2)*0.1)
+            self.node.setP(0)
+            self.odebody.setQuaternion(self.node.getQuat())
             self.base.camera.setP(self.base.camera.getP() - (y - self.base.win.getYSize()/2)*0.1)
             self.canSetTarget = True
             self.bcamera.lookAt(self.bluePortal, self.node.getPos(self.orangePortal))
@@ -252,8 +253,13 @@ class Player(object):
     def moveUpdate(self,task):
         """ this task makes the player move """
         # move where the keys set it
-        self.node.setPos(self.node,self.walk*globalClock.getDt()*self.speed)
-        self.node.setPos(self.node,self.strafe*globalClock.getDt()*self.speed)
+        movevec = (self.walk + self.strafe) * globalClock.getDt() * self.speed
+        self.odebody.setPosition(self.odebody.getRelPointPos(movevec))
+        # reset the 'roll' component of HPR if needed
+        quat = Quat(self.odebody.getQuaternion())
+        hpr = quat.getHpr()
+        quat.setHpr(VBase3(hpr.getX(), hpr.getY(), 0))
+        self.odebody.setQuaternion(quat)
         return task.cont
 
     @oldpostracker
@@ -273,7 +279,7 @@ class Player(object):
         #    self.mass.zero()
         #    self.mass.pos.setZ(highestZ+PLAYER_TO_FLOOR_TOLERANCE)
         #    self.node.setZ(highestZ+PLAYER_TO_FLOOR_TOLERANCE)
-        if self.readyToJump and self.node.getZ() < highestZ + PLAYER_TO_FLOOR_TOLERANCE_FOR_REJUMP:
+        if self.readyToJump:# and self.node.getZ() < highestZ + PLAYER_TO_FLOOR_TOLERANCE_FOR_REJUMP:
             self.mass.jump(JUMP_FORCE)
         return task.cont
 

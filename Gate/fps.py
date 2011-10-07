@@ -2,10 +2,10 @@
 
 from Gate.constants import *
 from Gate.companion import Companion
-from Gate.level import LevelCube
+from Gate.level import Level
 from panda3d.core import CollisionTraverser, CollisionHandlerPusher
 from panda3d.core import Quat, Vec4, BitMask32
-from panda3d.ode import OdeWorld, OdeBody, OdeMass, OdeSimpleSpace, OdeJointGroup, OdeBoxGeom, OdeTriMeshData, OdeTriMeshGeom, OdePlaneGeom
+from panda3d.ode import OdeWorld, OdeBody, OdeMass, OdeSimpleSpace, OdeJointGroup, OdeBoxGeom, OdeTriMeshData, OdeTriMeshGeom, OdePlaneGeom, OdeQuadTreeSpace, OdeHashSpace
 import sys
 import random
 
@@ -35,9 +35,9 @@ class FPS(object):
 
     def setupCubes(self):
         for i in range(5):
-            x = random.random()*0.5
-            y = random.random()*1+3
-            z = random.random()*1+3
+            x = random.random()*6+2
+            y = random.random()*6+2
+            z = random.random()*6+2
             self.companions.append(Companion(self.world, self.space, "cube", (x,y,z)))
 
     def setupOde(self):
@@ -45,17 +45,18 @@ class FPS(object):
         self.world.setGravity(0,0,-9.81)
         self.world.initSurfaceTable(1)
         self.world.setSurfaceEntry(0, 0, 150, 0.0, 9.1, 0.9, 0.00001, 0.0, 0.002)
-        self.space = OdeSimpleSpace()
+        self.space = OdeHashSpace()
         self.space.setAutoCollideWorld(self.world)
         self.contactgroup =  OdeJointGroup()
         self.space.setAutoCollideJointGroup(self.contactgroup)
-        groundGeom = OdePlaneGeom(self.space, Vec4(0, 0, 1, -30))
+        groundGeom = OdePlaneGeom(self.space, Vec4(0, 0, 1, -10))
         #modelTrimesh = OdeTriMeshData(self.level, True)
         #groundGeom = OdeTriMeshGeom(self.space, modelTrimesh)
         groundGeom.setCollideBits(CMASK_PLAYER | CMASK_CUBES)
         groundGeom.setCategoryBits(CMASK_LEVEL)
 
-        c1 = LevelCube(self.world, self.space, "cube", (0,0,-10),(6,6,6))
+        #c1 = LevelCube(self.world, self.space, "cube", "metal", (0,0,-10),(6,6,6))
+        level = Level("level2.lvl", self.world, self.space)
 
     def odeStep(self, task):
         # Add the deltaTime for the task to the accumulator
@@ -66,9 +67,9 @@ class FPS(object):
             # the accumulated time is less than the stepsize
             self.deltaTimeAcc -= STEPSIZE
             # Step the simulation
-            self.world.quickStep(STEPSIZE)
+            self.world.quickStep(self.deltaTimeAcc)
             # set the new positions
-            for companion in self.companions:
-                companion.step(render)
+        for companion in self.companions:
+            companion.step(render)
         self.contactgroup.empty() # Clear the contact joints
         return task.cont

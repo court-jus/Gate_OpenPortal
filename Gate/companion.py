@@ -24,7 +24,7 @@ class Companion(object):
         self.odebody.setMass(myMass)
 
         boxGeom = OdeBoxGeom(space, 0.3,0.3,0.3)
-        boxGeom.setCollideBits(CMASK_PLAYER | CMASK_LEVEL)
+        boxGeom.setCollideBits(CMASK_PLAYER | CMASK_CUBES | CMASK_LEVEL)
         boxGeom.setCategoryBits(CMASK_CUBES)
         boxGeom.setBody(self.odebody)
 

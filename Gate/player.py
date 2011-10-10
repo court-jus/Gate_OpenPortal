@@ -28,6 +28,7 @@ class Player(object):
     LEFT = Vec3(-1,0,0)
     RIGHT = Vec3(1,0,0)
     STOP = Vec3(0)
+    STAB_DELTA = 0.1
 
     def __init__(self, base, fps):
         self.base = base
@@ -36,6 +37,7 @@ class Player(object):
         self.walk = self.STOP
         self.strafe = self.STOP
         self.readyToJump = False
+        self.allowJump = True
         self.intoPortal = None
         self.mass = Mass()
         self.origin = (3,3,3)
@@ -226,7 +228,9 @@ class Player(object):
 
     @oldpostracker
     def odeStep(self, task):
+        last_z = self.node.getPos().getZ()
         self.node.setPosQuat(render, self.odebody.getPosition(), Quat(self.odebody.getQuaternion()))
+        delta = self.node.getPos().getZ() - last_z
         #self.node.setPos(render, self.odebody.getPosition())
         return task.cont
 
@@ -265,22 +269,9 @@ class Player(object):
     @oldpostracker
     def jumpUpdate(self,task):
         """ this task simulates gravity and makes the player jump """
-        # get the highest Z from the down casting ray
-        #highestZ = -100
-        #for i in range(self.nodeGroundHandler.getNumEntries()):
-        #    entry = self.nodeGroundHandler.getEntry(i)
-        #    z = entry.getSurfacePoint(render).getZ()
-        #    if z > highestZ and entry.getIntoNode().getName() in ( "CollisionStuff", "Plane", "Cube" ):
-        #        highestZ = z
-        # gravity effects and jumps
-        #self.mass.simulate(globalClock.getDt())
-        #self.node.setZ(self.mass.pos.getZ())
-        #if highestZ > self.node.getZ()-PLAYER_TO_FLOOR_TOLERANCE:
-        #    self.mass.zero()
-        #    self.mass.pos.setZ(highestZ+PLAYER_TO_FLOOR_TOLERANCE)
-        #    self.node.setZ(highestZ+PLAYER_TO_FLOOR_TOLERANCE)
-        if self.readyToJump:# and self.node.getZ() < highestZ + PLAYER_TO_FLOOR_TOLERANCE_FOR_REJUMP:
-            self.mass.jump(JUMP_FORCE)
+        if self.readyToJump and self.allowJump:
+            #self.allowJump = False
+            self.odebody.setLinearVel(0,0,10)
         return task.cont
 
     def firePortal(self, name, node):

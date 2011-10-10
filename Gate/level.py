@@ -49,9 +49,8 @@ class Level(object):
                 y = 0
                 continue
             for char in line.strip():
-                if char == " ":
-                    continue
-                self.cubes.append(LevelCube(self.world, self.space, texture = self.LEGEND.get(char, "dallage"), pos = (x, y, z), scale = (cs/2.,cs/2.,cs/2.)))
+                if char != " ":
+                    self.cubes.append(LevelCube(self.world, self.space, texture = self.LEGEND.get(char, "dallage"), pos = (x, y, z), scale = (cs/2.,cs/2.,cs/2.)))
                 x += cs
             y += cs
             x = 0

@@ -16,5 +16,6 @@ COLLISIONMASKS = {
     'player': BitMask32.bit(1),
     'portals': BitMask32.bit(2),
     'mouseRay': BitMask32.bit(3),
+    'exit': BitMask32.bit(4),
     'geometry': GeomNode.getDefaultCollideMask(),
 }

@@ -16,6 +16,8 @@ class MusicPlayer(object):
                 self.tracks.append(file)
 
     def play_random_track(self):
+        if not self.tracks:
+            return
         track = random.choice(self.tracks)
         mySound = self.base.loader.loadSfx("music/%s" % (track,))
         mySound.play()

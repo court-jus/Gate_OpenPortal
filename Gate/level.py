@@ -19,15 +19,13 @@ class LevelCube(object):
 class LevelExit(LevelCube):
 
     def __init__(self, *args, **kwargs):
-        print "Level exit is at %s" % (kwargs.get('pos'),)
         super(LevelExit, self).__init__(*args, **kwargs)
         self.node.setTransparency(TransparencyAttrib.MAlpha)
         cn = CollisionNode('levelExit')
-        cn.setFromCollideMask(BitMask32.allOff())
-        cn.setIntoCollideMask(COLLISIONMASKS['exit'])
+        cn.setFromCollideMask(COLLISIONMASKS['exit'])
+        cn.setIntoCollideMask(BitMask32.allOff())
         np = self.node.attachNewNode(cn)
-        np.show()
-        cn.addSolid(CollisionSphere(0,0,0,1))
+        cn.addSolid(CollisionSphere(0,0,0,1.1))
         h = CollisionHandlerEvent()
         h.addInPattern('%fn-into-%in')
         h.addOutPattern('%fn-outof-%in')
@@ -45,16 +43,28 @@ class Level(object):
         "X" : "exit",
         }
 
-    def __init__(self, filename):
+    def __init__(self):
         self.cube_size = 1
         self.cubes = []
+        self.settings = None
+
+    def clearlevel(self):
+        for c in self.cubes:
+            c.node.removeNode()
+            del c
+        self.cubes = []
+        self.settings = None
+
+    def loadlevel(self, levelname):
+        filename = "%s.lvl" % (levelname,)
+        self.clearlevel()
         json_data = ""
-        self.map_data = []
+        map_data = []
         with open(filename, "r") as fp:
             level_started = False
             for line in fp:
                 if level_started:
-                    self.map_data.append(line)
+                    map_data.append(line)
                 elif line.startswith('-LEVEL'):
                     level_started = True
                 else:
@@ -62,7 +72,7 @@ class Level(object):
         self.settings = LevelSettings(json_data)
         x = z = y = 0
         cs = self.cube_size
-        for line in self.map_data:
+        for line in map_data:
             if not line.strip():
                 continue
             if line.startswith('-Z-'):
@@ -71,7 +81,7 @@ class Level(object):
                 continue
             for char in line.strip():
                 if char == "X":
-                    self.levelexit = LevelExit(model = "cube_nocol", texture = self.LEGEND.get(char, "dallage"), pos = (x, y, z), scale = (cs/2.,cs/2.,cs/2.))
+                    self.cubes.append(LevelExit(model = "cube_nocol", texture = self.LEGEND.get(char, "dallage"), pos = (x, y, z), scale = (cs/2.,cs/2.,cs/2.)))
                 elif char != " ":
                     self.cubes.append(LevelCube(texture = self.LEGEND.get(char, "dallage"), pos = (x, y, z), scale = (cs/2.,cs/2.,cs/2.)))
                 x += cs
@@ -82,6 +92,7 @@ class LevelSettings(object):
 
     DEFAULTS = {
         'origin' : (42,42,42),
+        'next_level' : None,
         }
     def __init__(self, json_data):
         for k, v in self.DEFAULTS.items():

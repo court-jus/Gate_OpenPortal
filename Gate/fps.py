@@ -19,4 +19,5 @@ class FPS(object):
         self.base.pusher = CollisionHandlerPusher()
 
     def loadLevel(self, level = LEVELMODEL):
-        self.level = Level("%s.lvl" % (self.levelname,))
+        self.level = Level()
+        self.level.loadlevel(self.levelname)

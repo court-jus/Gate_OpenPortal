@@ -1,0 +1,101 @@
+<CoordinateSystem> { Z-up }
+
+<Comment> { "Egg laid by Chicken for Blender, version R85" }
+
+<Material> Material {
+  <Scalar> diffr {0.800000011921}
+  <Scalar> diffg {0.800000011921}
+  <Scalar> diffb {0.800000011921}
+  <Scalar> specr {0.25}
+  <Scalar> specg {0.25}
+  <Scalar> specb {0.25}
+  <Scalar> shininess {12.5}
+}
+<Group> Cube {
+  <VertexPool> Cube {
+    <Vertex> 0 {
+      1.0 1.0 -1.0
+      <UV>  {
+        1.000000 0.000000
+      }
+    }
+    <Vertex> 1 {
+      1.0 -1.0 -1.0
+      <UV>  {
+        0.000000 0.000000
+      }
+    }
+    <Vertex> 2 {
+      -1.0 -1.0 -1.0
+      <UV>  {
+        1.000000 0.000000
+      }
+    }
+    <Vertex> 3 {
+      -1.0 1.0 -1.0
+      <UV>  {
+        0.000000 0.000000
+      }
+    }
+    <Vertex> 4 {
+      1.0 1.0 1.0
+      <UV>  {
+        1.000000 1.000000
+      }
+    }
+    <Vertex> 5 {
+      1.0 -1.0 1.0
+      <UV>  {
+        0.000000 1.000000
+      }
+    }
+    <Vertex> 6 {
+      -1.0 -1.0 1.0
+      <UV>  {
+        1.000000 1.000000
+      }
+    }
+    <Vertex> 7 {
+      -1.0 1.0 1.0
+      <UV>  {
+        0.000000 1.000000
+      }
+    }
+  }
+  <Polygon> {
+    <MRef> { Material }
+    <Normal> { 0.000000 0.000000 -1.000000
+    }
+    <VertexRef> { 0 1 2 3 <Ref> { Cube } }
+  }
+  <Polygon> {
+    <MRef> { Material }
+    <Normal> { 0.000000 -0.000000 1.000000
+    }
+    <VertexRef> { 2 6 7 3 <Ref> { Cube } }
+  }
+  <Polygon> {
+    <MRef> { Material }
+    <Normal> { 1.000000 -0.000000 0.000000
+    }
+    <VertexRef> { 3 7 4 0 <Ref> { Cube } }
+  }
+  <Polygon> {
+    <MRef> { Material }
+    <Normal> { -0.000000 -1.000000 -0.000000
+    }
+    <VertexRef> { 0 4 5 1 <Ref> { Cube } }
+  }
+  <Polygon> {
+    <MRef> { Material }
+    <Normal> { -1.000000 0.000000 -0.000000
+    }
+    <VertexRef> { 4 7 6 5 <Ref> { Cube } }
+  }
+  <Polygon> {
+    <MRef> { Material }
+    <Normal> { 0.000000 1.000000 0.000000
+    }
+    <VertexRef> { 1 5 6 2 <Ref> { Cube } }
+  }
+}

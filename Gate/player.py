@@ -6,6 +6,7 @@ from panda3d.core import CollisionNode, CollisionSphere, CollisionRay, Collision
 from Gate.constants import *
 from Gate.physics.gravity import Mass
 from functools import wraps
+import sys
 
 def oldpostracker(fn):
     @wraps(fn)
@@ -59,7 +60,7 @@ class Player(object):
 
     def makePortals(self):
         # The BLUE CUBE
-        bpor = loader.loadModel("cube")
+        bpor = loader.loadModel("cube_nocol")
         bpor.reparentTo(render)
         bpor.setPos(*self.bporigin)
         bpor.setScale(0.3,0.02,0.5)
@@ -73,7 +74,7 @@ class Player(object):
         bcamera.node().setScene(render)
 
         # The ORANGE CUBE
-        opor = loader.loadModel("cube")
+        opor = loader.loadModel("cube_nocol")
         opor.reparentTo(render)
         opor.setPos(*self.oporigin)
         opor.setScale(0.3,0.02,0.5)
@@ -108,8 +109,8 @@ class Player(object):
     def createCollisions(self):
         """ create a collision solid and ray for the player """
         cn = CollisionNode('player')
-        cn.setFromCollideMask(COLLISIONMASKS['player'])
-        cn.setIntoCollideMask(COLLISIONMASKS['geometry'] | COLLISIONMASKS['portals'])
+        cn.setFromCollideMask(COLLISIONMASKS['geometry'])
+        cn.setIntoCollideMask(COLLISIONMASKS['portals'] | COLLISIONMASKS['exit'])
         cn.addSolid(CollisionSphere(0,0,0,3))
         solid = self.node.attachNewNode(cn)
         # TODO : find a way to remove that, it's the cause of the little
@@ -122,7 +123,7 @@ class Player(object):
         ray.setDirection(0,0,-1)
         cn = CollisionNode('playerRay')
         cn.setFromCollideMask(COLLISIONMASKS['player'])
-        cn.setIntoCollideMask(COLLISIONMASKS['geometry'])
+        cn.setIntoCollideMask(BitMask32.allOff())
         cn.addSolid(ray)
         solid = self.node.attachNewNode(cn)
         self.nodeGroundHandler = CollisionHandlerQueue()
@@ -131,8 +132,8 @@ class Player(object):
         # Fire the portals
         firingNode = CollisionNode('mouseRay')
         firingNP = self.base.camera.attachNewNode(firingNode)
-        firingNode.setFromCollideMask(COLLISIONMASKS['mouseRay'])
-        firingNode.setIntoCollideMask(COLLISIONMASKS['geometry'])
+        firingNode.setFromCollideMask(COLLISIONMASKS['geometry'])
+        firingNode.setIntoCollideMask(BitMask32.allOff())
         firingRay = CollisionRay()
         firingRay.setOrigin(0,0,0)
         firingRay.setDirection(0,1,0)
@@ -186,6 +187,7 @@ class Player(object):
         self.base.accept( "orangePortal-into-player" , self.enterPortal, ["orange"] )
         self.base.accept( "bluePortal-outof-player" , self.exitPortal, ["blue"] )
         self.base.accept( "orangePortal-outof-player" , self.exitPortal, ["orange"] )
+        self.base.accept( "levelExit-into-player" , self.levelExit)
         # init mouse update task
         taskMgr.add(self.mouseUpdate, 'mouse-task')
         taskMgr.add(self.moveUpdate, 'move-task')
@@ -297,3 +299,15 @@ class Player(object):
         # When you entered the blue portal, you have to exit the orange one
         if self.intoPortal != color:
             self.intoPortal = None
+
+    def levelExit(self, event):
+        if self.fps.level.settings.next_level:
+            self.fps.level.loadlevel(self.fps.level.settings.next_level)
+            self.origin = self.fps.level.settings.origin
+            self.resetPosition()
+            self.erasePortals()
+            self.walk = self.STOP
+            self.strafe = self.STOP
+        else:
+            print "You won !"
+            sys.exit(0)

@@ -1,4 +1,4 @@
-{"origin": [3,3,3]}
+{"origin": [6,6,3]}
 -LEVEL-
 ##########
 #========#
@@ -24,11 +24,22 @@ rrrrrrrrrr
 -Z-
 AAAAAAAAAA
 C        B
+C     BBBB
+C     BBBB
+C     BBBB
 C        B
 C        B
 C        B
 C        B
+rrrrrrrrrr
+-Z-
+AAAAAAAAAA
+C        B
+C  X     B
 C        B
 C        B
 C        B
+C        B
+C rrrrr  B
+C rrrrr  B
 rrrrrrrrrr

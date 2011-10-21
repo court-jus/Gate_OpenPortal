@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from panda3d.core import BitMask32, Quat
+from panda3d.core import TextNode, TransparencyAttrib, CollisionNode, CollisionSphere, CollisionHandlerEvent
 from Gate.constants import *
 import json
 
@@ -15,6 +16,23 @@ class LevelCube(object):
         sx,sy,sz = scale
         self.node.setScale(sx,sy,sz)
 
+class LevelExit(LevelCube):
+
+    def __init__(self, *args, **kwargs):
+        print "Level exit is at %s" % (kwargs.get('pos'),)
+        super(LevelExit, self).__init__(*args, **kwargs)
+        self.node.setTransparency(TransparencyAttrib.MAlpha)
+        cn = CollisionNode('levelExit')
+        cn.setFromCollideMask(BitMask32.allOff())
+        cn.setIntoCollideMask(COLLISIONMASKS['exit'])
+        np = self.node.attachNewNode(cn)
+        np.show()
+        cn.addSolid(CollisionSphere(0,0,0,1))
+        h = CollisionHandlerEvent()
+        h.addInPattern('%fn-into-%in')
+        h.addOutPattern('%fn-outof-%in')
+        base.cTrav.addCollider(np, h)
+
 class Level(object):
 
     LEGEND = {
@@ -24,6 +42,7 @@ class Level(object):
         "B" : "B",
         "C" : "C",
         "r" : "rose",
+        "X" : "exit",
         }
 
     def __init__(self, filename):
@@ -51,7 +70,9 @@ class Level(object):
                 y = 0
                 continue
             for char in line.strip():
-                if char != " ":
+                if char == "X":
+                    self.levelexit = LevelExit(model = "cube_nocol", texture = self.LEGEND.get(char, "dallage"), pos = (x, y, z), scale = (cs/2.,cs/2.,cs/2.))
+                elif char != " ":
                     self.cubes.append(LevelCube(texture = self.LEGEND.get(char, "dallage"), pos = (x, y, z), scale = (cs/2.,cs/2.,cs/2.)))
                 x += cs
             y += cs

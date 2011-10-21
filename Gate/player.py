@@ -40,9 +40,9 @@ class Player(object):
         self.allowJump = True
         self.intoPortal = None
         self.mass = Mass()
-        self.origin = (3,3,3)
-        self.bporigin = (0,1,0)
-        self.oporigin = (0,1,15)
+        self.origin = self.fps.level.settings.origin
+        self.bporigin = (0,3,0)
+        self.oporigin = (0,3,15)
         self.current_target = None
         self.canPortal = []
         self.canSetTarget = True
@@ -210,31 +210,7 @@ class Player(object):
         self.orangePortal.setPos(*self.oporigin)
         self.intoPortal = None
         self.canPortal = []
-
-    def odeSetup(self, world, space):
-        self.odebody = OdeBody(world)
-        self.odebody.setPosition(self.node.getPos(render))
-        self.odebody.setQuaternion(self.node.getQuat(render))
-
-        self.odeMass = OdeMass()
-        self.odeMass.setBox(11340, 1,1,1)
-
-        self.odebody.setMass(self.odeMass)
-
-        self.odeGeom = OdeBoxGeom(space, 1,1,1)
-        self.odeGeom.setCollideBits(CMASK_LEVEL | CMASK_LEVEL)
-        self.odeGeom.setCategoryBits(CMASK_PLAYER)
-        self.odeGeom.setBody(self.odebody)
-
-    @oldpostracker
-    def odeStep(self, task):
-        last_z = self.node.getPos().getZ()
-        self.node.setPosQuat(render, self.odebody.getPosition(), Quat(self.odebody.getQuaternion()))
-        delta = self.node.getPos().getZ() - last_z
-        #self.node.setPos(render, self.odebody.getPosition())
-        return task.cont
-
-    @oldpostracker
+    #@oldpostracker
     def mouseUpdate(self,task):
         """ this task updates the mouse """
         md = self.base.win.getPointer(0)
@@ -253,7 +229,7 @@ class Player(object):
             self.odebody.setQuaternion(self.node.getQuat(render))
         return task.cont
 
-    @oldpostracker
+    #@oldpostracker
     def moveUpdate(self,task):
         """ this task makes the player move """
         # move where the keys set it
@@ -266,7 +242,7 @@ class Player(object):
         self.odebody.setQuaternion(quat)
         return task.cont
 
-    @oldpostracker
+    #@oldpostracker
     def jumpUpdate(self,task):
         """ this task simulates gravity and makes the player jump """
         if self.readyToJump and self.allowJump:
@@ -290,7 +266,7 @@ class Player(object):
     def fireOrange(self, *arg, **kwargs):
         self.firePortal("orange", self.orangePortal)
 
-    @oldpostracker
+    #@oldpostracker
     def enterPortal(self, color, collision):
         #print "ENTERP"
         #print self.node.getPos()
@@ -316,7 +292,7 @@ class Player(object):
                 self.node.setH(180 - self.node.getH())
                 #print self.node.getPos()
             #print "FIN ENTERP", portal.getPos()
-    @oldpostracker
+    #@oldpostracker
     def exitPortal(self, color, collision):
         # When you entered the blue portal, you have to exit the orange one
         if self.intoPortal != color:

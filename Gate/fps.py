@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from Gate.constants import *
-from Gate.companion import Companion
 from Gate.level import Level
 from panda3d.core import CollisionTraverser, CollisionHandlerPusher
 from panda3d.core import Quat, Vec4, BitMask32
@@ -12,7 +11,8 @@ import random
 STEPSIZE = 1.0/90.0
 
 class FPS(object):
-    def __init__(self, base):
+    def __init__(self, base, levelname = 'level1'):
+        self.levelname = levelname
         self.base = base
         self.companions = []
         self.initCollision()
@@ -29,47 +29,4 @@ class FPS(object):
         self.base.pusher = CollisionHandlerPusher()
 
     def loadLevel(self, level = LEVELMODEL):
-        self.level = self.base.loader.loadModel(level)
-        self.level.reparentTo(render)
-        self.level.setTwoSided(True)
-
-    def setupCubes(self):
-        for i in range(5):
-            x = random.random()*6+2
-            y = random.random()*6+2
-            z = random.random()*6+2
-            self.companions.append(Companion(self.world, self.space, "cube", (x,y,z)))
-
-    def setupOde(self):
-        self.world = OdeWorld()
-        self.world.setGravity(0,0,-9.81)
-        self.world.initSurfaceTable(1)
-        self.world.setSurfaceEntry(0, 0, 150, 0.0, 9.1, 0.9, 0.00001, 0.0, 0.002)
-        self.space = OdeHashSpace()
-        self.space.setAutoCollideWorld(self.world)
-        self.contactgroup =  OdeJointGroup()
-        self.space.setAutoCollideJointGroup(self.contactgroup)
-        groundGeom = OdePlaneGeom(self.space, Vec4(0, 0, 1, -10))
-        #modelTrimesh = OdeTriMeshData(self.level, True)
-        #groundGeom = OdeTriMeshGeom(self.space, modelTrimesh)
-        groundGeom.setCollideBits(CMASK_PLAYER | CMASK_CUBES)
-        groundGeom.setCategoryBits(CMASK_LEVEL)
-
-        #c1 = LevelCube(self.world, self.space, "cube", "metal", (0,0,-10),(6,6,6))
-        level = Level("level2.lvl", self.world, self.space)
-
-    def odeStep(self, task):
-        # Add the deltaTime for the task to the accumulator
-        self.deltaTimeAcc += globalClock.getDt()
-        while self.deltaTimeAcc > STEPSIZE:
-            self.space.autoCollide() # Setup the contact joints
-            # Remove a stepSize from the accumulator until
-            # the accumulated time is less than the stepsize
-            self.deltaTimeAcc -= STEPSIZE
-            # Step the simulation
-            self.world.quickStep(self.deltaTimeAcc)
-            # set the new positions
-        for companion in self.companions:
-            companion.step(render)
-        self.contactgroup.empty() # Clear the contact joints
-        return task.cont
+        self.level = Level("%s.lvl" % (self.levelname,))

@@ -12,6 +12,7 @@
   <Scalar> shininess {12.5}
 }
 <Group> Cube {
+  <Collide> { Polyset keep descend } 
   <VertexPool> Cube {
     <Vertex> 0 {
       1.0 1.0 -1.0

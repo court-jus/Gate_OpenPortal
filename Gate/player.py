@@ -128,6 +128,17 @@ class Player(object):
         solid = self.node.attachNewNode(cn)
         self.nodeGroundHandler = CollisionHandlerQueue()
         self.base.cTrav.addCollider(solid, self.nodeGroundHandler)
+        # init players ceil collisions
+        ray = CollisionRay()
+        ray.setOrigin(0,0,.2)
+        ray.setDirection(0,0,1)
+        cn = CollisionNode('playerUpRay')
+        cn.setFromCollideMask(COLLISIONMASKS['player'])
+        cn.setIntoCollideMask(BitMask32.allOff())
+        cn.addSolid(ray)
+        solid = self.node.attachNewNode(cn)
+        self.ceilGroundHandler = CollisionHandlerQueue()
+        self.base.cTrav.addCollider(solid, self.ceilGroundHandler)
 
         # Fire the portals
         firingNode = CollisionNode('mouseRay')
@@ -236,11 +247,17 @@ class Player(object):
         """ this task simulates gravity and makes the player jump """
         # get the highest Z from the down casting ray
         highestZ = -100
+        lowestZ = 100
         for i in range(self.nodeGroundHandler.getNumEntries()):
             entry = self.nodeGroundHandler.getEntry(i)
             z = entry.getSurfacePoint(render).getZ()
             if z > highestZ and entry.getIntoNode().getName() in ( "CollisionStuff", "Plane", "Cube" ):
                 highestZ = z
+        for i in range(self.ceilGroundHandler.getNumEntries()):
+            entry = self.ceilGroundHandler.getEntry(i)
+            z = entry.getSurfacePoint(render).getZ()
+            if z < lowestZ and entry.getIntoNode().getName() in ( "CollisionStuff", "Plane", "Cube" ):
+                lowestZ = z
         # gravity effects and jumps
         self.mass.simulate(globalClock.getDt())
         self.node.setZ(self.mass.pos.getZ())
@@ -248,6 +265,10 @@ class Player(object):
             self.mass.zero()
             self.mass.pos.setZ(highestZ+PLAYER_TO_FLOOR_TOLERANCE)
             self.node.setZ(highestZ+PLAYER_TO_FLOOR_TOLERANCE)
+        if lowestZ < self.node.getZ()+PLAYER_TO_FLOOR_TOLERANCE:
+            self.mass.zero()
+            self.mass.pos.setZ(lowestZ-PLAYER_TO_FLOOR_TOLERANCE)
+            self.node.setZ(lowestZ-PLAYER_TO_FLOOR_TOLERANCE)
         if self.readyToJump and self.node.getZ() < highestZ + PLAYER_TO_FLOOR_TOLERANCE_FOR_REJUMP:
             self.mass.jump(JUMP_FORCE)
         return task.cont

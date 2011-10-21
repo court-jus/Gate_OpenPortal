@@ -36,7 +36,7 @@ class Player(object):
         self.readyToJump = False
         self.intoPortal = None
         self.mass = Mass()
-        self.origin = (0,3,3)
+        self.origin = self.fps.level.settings.origin
         self.bporigin = (0,3,0)
         self.oporigin = (0,3,15)
         self.current_target = None

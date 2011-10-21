@@ -6,7 +6,8 @@ from panda3d.core import CollisionTraverser, CollisionHandlerPusher
 import sys
 
 class FPS(object):
-    def __init__(self, base):
+    def __init__(self, base, levelname = 'level1'):
+        self.levelname = levelname
         self.base = base
         self.initCollision()
         self.loadLevel()
@@ -18,4 +19,4 @@ class FPS(object):
         self.base.pusher = CollisionHandlerPusher()
 
     def loadLevel(self, level = LEVELMODEL):
-        self.level = Level("level2.lvl")
+        self.level = Level("%s.lvl" % (self.levelname,))

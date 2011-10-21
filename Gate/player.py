@@ -198,6 +198,7 @@ class Player(object):
         print self.node.getPos()
         print self.mass
     def resetPosition(self):
+        self.node.setHpr(VBase3(0,0,0))
         self.node.setPos(*self.origin)
         self.mass.pos = VBase3(*self.origin)
     def erasePortals(self):

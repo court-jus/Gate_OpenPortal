@@ -1,4 +1,4 @@
-{"origin": [3,6,2], "next_level": "level2"}
+{"origin": [1,1,1], "next_level": "level2"}
 -LEVEL-
 ##########
 #========#
@@ -24,7 +24,7 @@
 -Z-
 ##########
 #        #
-#   B    #
+#        #
 #        #
 #AAAAAAAA#
 #        #

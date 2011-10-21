@@ -22,3 +22,10 @@ class OSD(object):
     def showCrosshair(self):
         io = OnscreenImage(image = 'reticule.png', pos = (0,0,0), scale = 0.05)
         io.setTransparency(TransparencyAttrib.MAlpha)
+
+    def announceTrack(self, track):
+        to = OnscreenText(text = u'Currently playing - %s' % (track,),
+                          pos = (0, -0.95),
+                          scale = 0.04,
+                          font = self.font,
+                          )

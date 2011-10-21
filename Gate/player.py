@@ -205,7 +205,7 @@ class Player(object):
         self.orangePortal.setPos(*self.oporigin)
         self.intoPortal = None
         self.canPortal = []
-    @oldpostracker
+    #@oldpostracker
     def mouseUpdate(self,task):
         """ this task updates the mouse """
         md = self.base.win.getPointer(0)
@@ -220,7 +220,7 @@ class Player(object):
             self.canPortal = ['blue','orange']
         return task.cont
 
-    @oldpostracker
+    #@oldpostracker
     def moveUpdate(self,task):
         """ this task makes the player move """
         # move where the keys set it
@@ -228,7 +228,7 @@ class Player(object):
         self.node.setPos(self.node,self.strafe*globalClock.getDt()*self.speed)
         return task.cont
 
-    @oldpostracker
+    #@oldpostracker
     def jumpUpdate(self,task):
         """ this task simulates gravity and makes the player jump """
         # get the highest Z from the down casting ray
@@ -265,7 +265,7 @@ class Player(object):
     def fireOrange(self, *arg, **kwargs):
         self.firePortal("orange", self.orangePortal)
 
-    @oldpostracker
+    #@oldpostracker
     def enterPortal(self, color, collision):
         #print "ENTERP"
         #print self.node.getPos()
@@ -291,7 +291,7 @@ class Player(object):
                 self.node.setH(180 - self.node.getH())
                 #print self.node.getPos()
             #print "FIN ENTERP", portal.getPos()
-    @oldpostracker
+    #@oldpostracker
     def exitPortal(self, color, collision):
         # When you entered the blue portal, you have to exit the orange one
         if self.intoPortal != color:

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from Gate.constants import LEVELMODEL
+from Gate.constants import *
+from Gate.level import Level
 from panda3d.core import CollisionTraverser, CollisionHandlerPusher
 import sys
 
@@ -17,6 +18,4 @@ class FPS(object):
         self.base.pusher = CollisionHandlerPusher()
 
     def loadLevel(self, level = LEVELMODEL):
-        self.level = self.base.loader.loadModel(level)
-        self.level.reparentTo(render)
-        self.level.setTwoSided(True)
+        self.level = Level("level2.lvl")

@@ -13,7 +13,7 @@ def main():
         levelname = a[0]
     base = ShowBase()
     fps = FPS(base, levelname)
-    player = Player(base, FPS)
+    player = Player(base, fps)
     base.run()
 
 if __name__ == "__main__":

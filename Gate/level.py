@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from panda3d.core import BitMask32, Quat
 from Gate.constants import *
+import json
 
 class LevelCube(object):
 
@@ -28,10 +29,18 @@ class Level(object):
     def __init__(self, filename):
         self.cube_size = 1
         self.cubes = []
+        json_data = ""
         self.map_data = []
         with open(filename, "r") as fp:
+            level_started = False
             for line in fp:
-                self.map_data.append(line)
+                if level_started:
+                    self.map_data.append(line)
+                elif line.startswith('-LEVEL'):
+                    level_started = True
+                else:
+                    json_data += line
+        self.settings = LevelSettings(json_data)
         x = z = y = 0
         cs = self.cube_size
         for line in self.map_data:
@@ -47,3 +56,14 @@ class Level(object):
                 x += cs
             y += cs
             x = 0
+
+class LevelSettings(object):
+
+    DEFAULTS = {
+        'origin' : (42,42,42),
+        }
+    def __init__(self, json_data):
+        for k, v in self.DEFAULTS.items():
+            setattr(self, k, v)
+        for k, v in json.loads(json_data).items():
+            setattr(self, k, v)

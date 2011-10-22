@@ -35,7 +35,6 @@ class LavaCube(LevelCube):
 
     def __init__(self, model = "cube_nocol", texture = "lava", pos = (0,0,0), scale = (1,1,1)):
         super(LavaCube, self).__init__(model, texture, pos, scale)
-        self.node.setTransparency(TransparencyAttrib.MAlpha)
         cn = CollisionNode('lava')
         cn.setFromCollideMask(COLLISIONMASKS['lava'])
         cn.setIntoCollideMask(BitMask32.allOff())

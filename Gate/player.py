@@ -239,8 +239,7 @@ class Player(object):
     def moveUpdate(self,task):
         """ this task makes the player move """
         # move where the keys set it
-        self.node.setPos(self.node,self.walk*globalClock.getDt()*self.speed)
-        self.node.setPos(self.node,self.strafe*globalClock.getDt()*self.speed)
+        self.node.setPos(self.node,(self.walk + self.strafe)*globalClock.getDt()*self.speed)
         return task.cont
 
     #@oldpostracker

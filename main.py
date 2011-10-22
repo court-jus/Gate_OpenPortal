@@ -10,10 +10,11 @@ from panda3d.core import WindowProperties
 
 def main():
     p = OptionParser()
-    o, a = p.parse_args()
+    p.add_option('-m', '--nomusic', action="store_false", dest="music", default = True, help = u"Disable music")
+    options, args = p.parse_args()
     levelname = 'level1'
-    if a:
-        levelname = a[0]
+    if args:
+        levelname = args[0]
     base = ShowBase()
     props = WindowProperties()
     props.setCursorHidden(True)
@@ -21,7 +22,8 @@ def main():
     fps = FPS(base, levelname)
     osd = OSD(base)
     mplayer = MusicPlayer(base, osd)
-    mplayer.play_random_track()
+    if options.music:
+        mplayer.play_random_track()
     player = Player(base, fps)
     base.run()
 

@@ -18,8 +18,8 @@ class LevelCube(object):
 
 class LevelExit(LevelCube):
 
-    def __init__(self, *args, **kwargs):
-        super(LevelExit, self).__init__(*args, **kwargs)
+    def __init__(self, model = "cube_nocol", texture = "exit", pos = (0,0,0), scale = (1,1,1)):
+        super(LevelExit, self).__init__(model, texture, pos, scale)
         self.node.setTransparency(TransparencyAttrib.MAlpha)
         cn = CollisionNode('levelExit')
         cn.setFromCollideMask(COLLISIONMASKS['exit'])
@@ -31,16 +31,33 @@ class LevelExit(LevelCube):
         h.addOutPattern('%fn-outof-%in')
         base.cTrav.addCollider(np, h)
 
+class LavaCube(LevelCube):
+
+    def __init__(self, model = "cube_nocol", texture = "lava", pos = (0,0,0), scale = (1,1,1)):
+        super(LavaCube, self).__init__(model, texture, pos, scale)
+        self.node.setTransparency(TransparencyAttrib.MAlpha)
+        cn = CollisionNode('lava')
+        cn.setFromCollideMask(COLLISIONMASKS['lava'])
+        cn.setIntoCollideMask(BitMask32.allOff())
+        np = self.node.attachNewNode(cn)
+        cn.addSolid(CollisionSphere(0,0,0,1.1))
+        h = CollisionHandlerEvent()
+        h.addInPattern('%fn-into-%in')
+        h.addOutPattern('%fn-outof-%in')
+        base.cTrav.addCollider(np, h)
+
+
 class Level(object):
 
     LEGEND = {
-        "#" : "metal",
-        "=" : "wood",
-        "A" : "A",
-        "B" : "B",
-        "C" : "C",
-        "r" : "rose",
-        "X" : "exit",
+        "#" : ("metal", LevelCube),
+        "=" : ("wood", LevelCube),
+        "A" : ("A", LevelCube),
+        "B" : ("B", LevelCube),
+        "C" : ("C", LevelCube),
+        "r" : ("rose", LevelCube),
+        "L" : ("lava", LavaCube),
+        "X" : ("exit", LevelExit),
         }
 
     def __init__(self):
@@ -80,10 +97,9 @@ class Level(object):
                 y = 0
                 continue
             for char in line.strip():
-                if char == "X":
-                    self.cubes.append(LevelExit(model = "cube_nocol", texture = self.LEGEND.get(char, "dallage"), pos = (x, y, z), scale = (cs/2.,cs/2.,cs/2.)))
-                elif char != " ":
-                    self.cubes.append(LevelCube(texture = self.LEGEND.get(char, "dallage"), pos = (x, y, z), scale = (cs/2.,cs/2.,cs/2.)))
+                if char != " ":
+                    texture, model = self.LEGEND.get(char, ("dallage", LevelCube))
+                    self.cubes.append(model(texture = texture, pos = (x, y, z), scale = (cs/2., cs/2., cs/2.)))
                 x += cs
             y += cs
             x = 0

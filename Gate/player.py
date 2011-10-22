@@ -110,7 +110,7 @@ class Player(object):
         """ create a collision solid and ray for the player """
         cn = CollisionNode('player')
         cn.setFromCollideMask(COLLISIONMASKS['geometry'])
-        cn.setIntoCollideMask(COLLISIONMASKS['portals'] | COLLISIONMASKS['exit'])
+        cn.setIntoCollideMask(COLLISIONMASKS['portals'] | COLLISIONMASKS['exit'] | COLLISIONMASKS['lava'])
         cn.addSolid(CollisionSphere(0,0,0,3))
         solid = self.node.attachNewNode(cn)
         # TODO : find a way to remove that, it's the cause of the little
@@ -199,6 +199,7 @@ class Player(object):
         self.base.accept( "bluePortal-outof-player" , self.exitPortal, ["blue"] )
         self.base.accept( "orangePortal-outof-player" , self.exitPortal, ["orange"] )
         self.base.accept( "levelExit-into-player" , self.levelExit)
+        self.base.accept( "lava-into-player" , self.resetPosition)
         # init mouse update task
         taskMgr.add(self.mouseUpdate, 'mouse-task')
         taskMgr.add(self.moveUpdate, 'move-task')
@@ -210,7 +211,7 @@ class Player(object):
     def showPosition(self):
         print self.node.getPos()
         print self.mass
-    def resetPosition(self):
+    def resetPosition(self, *args, **kwargs):
         self.node.setHpr(VBase3(0,0,0))
         self.node.setPos(*self.origin)
         self.mass.pos = VBase3(*self.origin)

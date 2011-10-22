@@ -16,6 +16,7 @@ def main():
     if args:
         levelname = args[0]
     base = ShowBase()
+    #base.messenger.toggleVerbose()
     props = WindowProperties()
     props.setCursorHidden(True)
     base.win.requestProperties(props)

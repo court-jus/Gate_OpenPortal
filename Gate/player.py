@@ -277,6 +277,11 @@ class Player(object):
         self.firingHandler.sortEntries()
         if self.firingHandler.getNumEntries() > 0:
             closest = self.firingHandler.getEntry(0)
+            if closest.getIntoNode().getTag('noportals') == '1':
+                return
+            for pnum in range(closest.getIntoNode().getNumParents()):
+                if closest.getIntoNode().getParent(pnum).getTag('noportals') == '1':
+                    return
             point = closest.getSurfacePoint(render)
             normal = closest.getSurfaceNormal(render)
             node.setPos(point)

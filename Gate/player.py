@@ -274,14 +274,17 @@ class Player(object):
         return task.cont
 
     def firePortal(self, name, node):
+        def hasTagValue(node, tag, value):
+            if node.getTag(tag) == value:
+                return True
+            for pnum in range(node.getNumParents()):
+                return hasTagValue(node.getParent(pnum), tag, value)
+            return False
         self.firingHandler.sortEntries()
         if self.firingHandler.getNumEntries() > 0:
             closest = self.firingHandler.getEntry(0)
-            if closest.getIntoNode().getTag('noportals') == '1':
+            if hasTagValue(closest.getIntoNode(), 'noportals', '1'):
                 return
-            for pnum in range(closest.getIntoNode().getNumParents()):
-                if closest.getIntoNode().getParent(pnum).getTag('noportals') == '1':
-                    return
             point = closest.getSurfacePoint(render)
             normal = closest.getSurfaceNormal(render)
             node.setPos(point)

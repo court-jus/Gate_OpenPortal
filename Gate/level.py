@@ -17,6 +17,12 @@ class LevelCube(object):
         sx,sy,sz = scale
         self.node.setScale(sx,sy,sz)
 
+class NoPortalCube(LevelCube):
+
+    def __init__(self, *args, **kwargs):
+        super(NoPortalCube, self).__init__(*args, **kwargs)
+        self.node.setTag('noportals', '1')
+
 class LevelExit(LevelCube):
 
     def __init__(self, model = "models/sphere", texture = "exit", pos = (0,0,0), scale = (1,1,1)):
@@ -57,6 +63,7 @@ class Level(object):
         "B" : ("B", LevelCube),
         "C" : ("C", LevelCube),
         "r" : ("rose", LevelCube),
+        "M" : ("marble", NoPortalCube),
         "L" : ("lava", LavaCube),
         "X" : ("exit", LevelExit),
         }

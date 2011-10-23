@@ -8,8 +8,9 @@ class LevelCube(object):
 
     def __init__(self, model = "cube", texture = "dallage", pos = (0,0,0), scale = (1,1,1)):
         self.node = loader.loadModel(model)
-        tex = loader.loadTexture("models/tex/%s.png" % (texture,))
-        self.node.setTexture(tex, 1)
+        if texture:
+            tex = loader.loadTexture("models/tex/%s.png" % (texture,))
+            self.node.setTexture(tex, 1)
         self.node.reparentTo(render)
         self.node.setPos(*pos)
 
@@ -18,9 +19,9 @@ class LevelCube(object):
 
 class LevelExit(LevelCube):
 
-    def __init__(self, model = "cube_nocol", texture = "exit", pos = (0,0,0), scale = (1,1,1)):
+    def __init__(self, model = "models/sphere", texture = "exit", pos = (0,0,0), scale = (1,1,1)):
         super(LevelExit, self).__init__(model, texture, pos, scale)
-        self.node.setTransparency(TransparencyAttrib.MAlpha)
+        #self.node.setTransparency(TransparencyAttrib.MAlpha)
         cn = CollisionNode('levelExit')
         cn.setFromCollideMask(COLLISIONMASKS['exit'])
         cn.setIntoCollideMask(BitMask32.allOff())

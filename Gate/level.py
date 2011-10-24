@@ -2,18 +2,20 @@
 from panda3d.core import BitMask32, Quat, VBase4
 from panda3d.core import TextNode, TransparencyAttrib, CollisionNode, CollisionSphere, CollisionHandlerEvent
 from panda3d.core import Spotlight, DirectionalLight, PointLight, AmbientLight
+from panda3d.ode import OdeBoxGeom
 from Gate.constants import *
+from Gate.objects import OdeCollisionStaticGO
 import json
 
-class LevelCube(object):
+class LevelCube(OdeCollisionStaticGO):
 
     def __init__(self, model = "cube", texture = "dallage", pos = (0,0,0), scale = (1,1,1)):
-        self.node = loader.loadModel(model)
+        super(LevelCube, self).__init__(model = model, colgeom = OdeBoxGeom(base.odeSpace, *scale), colbits = BitMask32(0x00000001), catbits = BitMask32(0x00000002))
         if texture:
             tex = loader.loadTexture("models/tex/%s.png" % (texture,))
             self.node.setTexture(tex, 1)
         self.node.reparentTo(render)
-        self.node.setPos(*pos)
+        self.setPos(*pos)
 
         sx,sy,sz = scale
         self.node.setScale(sx,sy,sz)

@@ -6,7 +6,7 @@ LEVELMODEL = 'models/room1'
 AZERTY = True
 JUMP_FORCE = 25
 GRAVITY = 15
-RUN_SPEED = 25
+RUN_SPEED =10 
 PLAYER_TO_FLOOR_TOLERANCE = .3
 PLAYER_TO_FLOOR_TOLERANCE_FOR_REJUMP = 1
 ORANGE = (242/255., 181/255., 75/255.,1)
@@ -19,4 +19,6 @@ COLLISIONMASKS = {
     'exit': BitMask32.bit(4),
     'lava': BitMask32.bit(5),
     'geometry': GeomNode.getDefaultCollideMask(),
+    'all': BitMask32.allOn(),
 }
+

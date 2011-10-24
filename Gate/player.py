@@ -27,6 +27,10 @@ class Player(object):
     LEFT = Vec3(-1,0,0)
     RIGHT = Vec3(1,0,0)
     STOP = Vec3(0)
+    PORTAL_CYCLE = {
+        'blue' : 'orange',
+        'orange' : 'blue',
+        }
 
     def __init__(self, base, fps):
         self.base = base
@@ -38,8 +42,8 @@ class Player(object):
         self.intoPortal = None
         self.mass = Mass()
         self.origin = self.fps.level.settings.origin
-        self.bporigin = (0,3,0)
-        self.oporigin = (0,3,15)
+        self.bporigin = (999,999,999)
+        self.oporigin = (999,999,999)
         self.current_target = None
         self.canPortal = []
         self.canSetTarget = True
@@ -61,6 +65,7 @@ class Player(object):
     def makePortals(self):
         # The BLUE CUBE
         bpor = loader.loadModel("cube_nocol")
+        bpor.setTag('noportals', '1')
         bpor.reparentTo(render)
         bpor.setPos(*self.bporigin)
         bpor.setScale(0.3,0.02,0.5)
@@ -75,6 +80,7 @@ class Player(object):
 
         # The ORANGE CUBE
         opor = loader.loadModel("cube_nocol")
+        opor.setTag('noportals', '1')
         opor.reparentTo(render)
         opor.setPos(*self.oporigin)
         opor.setScale(0.3,0.02,0.5)
@@ -213,11 +219,13 @@ class Player(object):
         print self.mass
     def resetPosition(self, *args, **kwargs):
         self.node.setHpr(VBase3(0,0,0))
-        self.node.setPos(*self.origin)
         self.mass.pos = VBase3(*self.origin)
+        self.node.setPos(self.mass.pos)
     def erasePortals(self):
         self.bluePortal.setPos(*self.bporigin)
         self.orangePortal.setPos(*self.oporigin)
+        self.bluePortal.detachNode()
+        self.orangePortal.detachNode()
         self.intoPortal = None
         self.canPortal = []
     #@oldpostracker
@@ -232,7 +240,7 @@ class Player(object):
             self.canSetTarget = True
             self.bcamera.lookAt(self.bluePortal, self.node.getPos(self.orangePortal))
             self.ocamera.lookAt(self.orangePortal, self.node.getPos(self.bluePortal))
-            self.canPortal = ['blue','orange']
+            #self.canPortal = ['blue','orange']
         return task.cont
 
     #@oldpostracker
@@ -289,7 +297,10 @@ class Player(object):
             normal = closest.getSurfaceNormal(render)
             node.setPos(point)
             node.lookAt(point + normal)
-            self.canPortal.append(name)
+            node.reparentTo(render)
+            dest = self.PORTAL_CYCLE[name]
+            if dest not in self.canPortal:
+                self.canPortal.append(dest)
 
     def fireBlue(self, *arg, **kwargs):
         self.firePortal("blue", self.bluePortal)
@@ -299,22 +310,20 @@ class Player(object):
 
     #@oldpostracker
     def enterPortal(self, color, collision):
-        #print "ENTERP"
+        #print "ENTERP", self.canPortal
         #print self.node.getPos()
         if self.intoPortal is None and color in self.canPortal:
-            self.walk = self.STOP
-            self.strafe = self.STOP
+            #self.walk = self.STOP
+            #self.strafe = self.STOP
+            self.node.setHpr(VBase3(0,0,0))
             self.intoPortal = color
             portal = {"orange": self.bluePortal, "blue": self.orangePortal}.get(color)
             otherportal =  {"orange": self.orangePortal, "blue": self.bluePortal}.get(color)
-            self.node.setPos(portal.getPos())
-            #print self.node.getPos()
-            self.mass.pos = self.node.getPos()
-            #print self.node.getPos()
             # New HPR is relative to 'new' portal but it the 'same' value
             # as the old HPR seen from the 'other' portal
             self.node.setH(portal, 180-self.node.getH(otherportal))
-            #print self.node.getPos()
+            self.node.setPos(portal.getPos() + self.walk / 10.)
+            self.mass.pos = self.node.getPos()
             #self.node.setR(portal, self.node.getR(otherportal))
             # Make half a turn (only if we straffing without walking)
             if self.walk == self.STOP and self.strafe != self.STOP:

@@ -30,6 +30,7 @@ class LevelExit(LevelCube):
         super(LevelExit, self).__init__(model, texture, pos, scale)
         #self.node.setTransparency(TransparencyAttrib.MAlpha)
         self.node.setTag('noportals', '1')
+        self.node.setTag('isexit', '1')
         cn = CollisionNode('levelExit')
         cn.setFromCollideMask(COLLISIONMASKS['exit'])
         cn.setIntoCollideMask(BitMask32.allOff())

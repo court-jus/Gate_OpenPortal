@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from panda3d.core import BitMask32, Quat
+from panda3d.core import BitMask32, Quat, VBase4
 from panda3d.core import TextNode, TransparencyAttrib, CollisionNode, CollisionSphere, CollisionHandlerEvent
+from panda3d.core import Spotlight, DirectionalLight, PointLight, AmbientLight
 from Gate.constants import *
 import json
 
@@ -80,6 +81,17 @@ class Level(object):
         self.cubes = []
         self.settings = None
 
+    def makeLights(self):
+        alight = AmbientLight('alight')
+        alight.setColor(VBase4(0.2,0.2,0.2,1))
+        alnp = render.attachNewNode(alight)
+        render.setLight(alnp)
+        for pl in self.settings.pointlights:
+            lamp = PointLight('player_light')
+            lampnp = render.attachNewNode(lamp)
+            lampnp.setPos(*pl)
+            render.setLight(lampnp)
+
     def loadlevel(self, levelname):
         filename = "%s.lvl" % (levelname,)
         self.clearlevel()
@@ -95,6 +107,7 @@ class Level(object):
                 else:
                     json_data += line
         self.settings = LevelSettings(json_data)
+        self.makeLights()
         x = z = y = 0
         cs = self.cube_size
         for line in map_data:
@@ -117,6 +130,7 @@ class LevelSettings(object):
     DEFAULTS = {
         'origin' : (42,42,42),
         'next_level' : None,
+        'pointlights': [],
         }
     def __init__(self, json_data):
         for k, v in self.DEFAULTS.items():

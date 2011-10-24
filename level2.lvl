@@ -1,4 +1,5 @@
-{"origin": [1,1,5]}
+{"origin": [1,1,4],
+"pointlights": [[1,1,5], [8,1,5]]}
 -LEVEL-
 MMMMMMMMMM
 MMMMMMMMMM

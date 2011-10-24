@@ -1,0 +1,3 @@
+stonewall.png : http://www.geograph.org.uk/photo/2430463
+woodplanks.png : http://www.cgtextures.com/
+metal.png : http://www.cgtextures.com/

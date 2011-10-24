@@ -57,13 +57,13 @@ class LavaCube(LevelCube):
 class Level(object):
 
     LEGEND = {
-        "#" : ("metal", LevelCube),
-        "=" : ("wood", LevelCube),
+        "#" : ("stonewall", LevelCube),
+        "=" : ("woodplanks", LevelCube),
         "A" : ("A", LevelCube),
         "B" : ("B", LevelCube),
         "C" : ("C", LevelCube),
         "r" : ("rose", LevelCube),
-        "M" : ("marble", NoPortalCube),
+        "M" : ("metal", NoPortalCube),
         "L" : ("lava", LavaCube),
         "X" : ("exit", LevelExit),
         }

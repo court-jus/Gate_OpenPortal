@@ -205,7 +205,7 @@ class Player(object):
         self.base.accept( "bluePortal-outof-player" , self.exitPortal, ["blue"] )
         self.base.accept( "orangePortal-outof-player" , self.exitPortal, ["orange"] )
         self.base.accept( "levelExit-into-player" , self.levelExit)
-        self.base.accept( "lava-into-player" , self.resetPosition)
+        self.base.accept( "lava-into-player" , self.fallIntoLava)
         # init mouse update task
         taskMgr.add(self.mouseUpdate, 'mouse-task')
         taskMgr.add(self.moveUpdate, 'move-task')
@@ -217,6 +217,10 @@ class Player(object):
     def showPosition(self):
         print self.node.getPos()
         print self.mass
+    def fallIntoLava(self, *args, **kwargs):
+        # TODO : sound and message + little delay
+        self.erasePortals()
+        self.resetPosition()
     def resetPosition(self, *args, **kwargs):
         self.node.setHpr(VBase3(0,0,0))
         self.mass.pos = VBase3(*self.origin)

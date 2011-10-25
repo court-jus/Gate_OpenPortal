@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from Gate.constants import *
-from panda3d.core import Vec3, VBase3
+from panda3d.core import Vec3, VBase3, Mat4
 
 class PlayerController(object):
     """
@@ -74,8 +74,9 @@ class PlayerController(object):
         return task.cont
 
     def moveUpdate(self, task):
-        #self.player.setPos(self.player.node, self.walk*globalClock.getDt()*self.speed)
-        walk_vec = self.walk * self.speed
+        mat = Mat4()
+        mat.setRotateMat(self.player.getH(), Vec3(0, 0, 1))
+        walk_vec = mat.xformVec(self.walk) * self.speed
         walk_vec.setZ(self.player.odebody.getLinearVel().getZ())
         self.player.odebody.setLinearVel(walk_vec)
         return task.cont

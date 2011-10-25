@@ -13,12 +13,14 @@ class PlayerController(object):
     LEFT = Vec3(-1,0,0)
     RIGHT = Vec3(1,0,0)
     STOP = Vec3(0)
+    leg_length = 0.5
     def __init__(self, player, origin):
         self.player = player
         self.origin = origin
         self.speed = RUN_SPEED
         self.walk = self.STOP
-        self.currently_jumping = False
+        self.wants_to_jump = False
+        self.allowed_to_jump = False
 
         base.accept( "space" , self.jump, [True])
         base.accept( "space-up" , self.jump, [False])
@@ -33,9 +35,10 @@ class PlayerController(object):
         base.accept( "r-up" , self.resetPosition )
         base.accept( "p-up" , self.showPosition )
 
-        base.accept("yourCollision", self.stop)
+        base.accept("yourCollision", self.contact)
 
         taskMgr.add(self.moveUpdate, 'move-task')
+        taskMgr.add(self.jumpUpdate, 'jump-task')
 
         self.resetPosition()
 
@@ -49,12 +52,27 @@ class PlayerController(object):
     def addToWalk(self, vec):
         self.walk += vec
 
-    def stop(self, entry):
-        self.walk = self.STOP
+    def contact(self, entry):
+        # Pour chaque point de contact, on regarde si c'est """sous les pieds""" et quel est l'angle de contact
+        for cpidx in range(entry.getNumContacts()):
+            contact_geom = entry.getContactGeom(cpidx)
+            if contact_geom.getPos().getZ() < self.player.getPos().getZ() - self.leg_length:
+                vert = VBase3(0, 0, 1) # la verticale
+                norm = contact_geom.getNormal()
+                if norm.project(vert).getZ() > 0.87: # angle de 60° par rapport à la verticale environ
+                    self.player.currently_jumping = False
+                    self.allowed_to_jump = True
 
-    def jump(self, jumpstatus):
-        self.currently_jumping = jumpstatus
-        #self.player.odebody.setForce(Vec3(0,10000,0))
+    def jump(self, wants_to_jump = False):
+        self.wants_to_jump = wants_to_jump
+
+    def jumpUpdate(self, task):
+        self.player.jump = False
+        if self.allowed_to_jump and self.wants_to_jump:
+            self.player.jump = True
+            self.allowed_to_jump = False
+        return task.cont
+
     def moveUpdate(self, task):
         #self.player.setPos(self.player.node, self.walk*globalClock.getDt()*self.speed)
         walk_vec = self.walk * self.speed

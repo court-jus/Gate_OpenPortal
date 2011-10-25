@@ -73,6 +73,8 @@ class OdeCollisionStaticGO(GameObject):
 
 class OdeCollisionGO(OdeCollisionStaticGO):
 
+    density = 1 # kg/m3
+
     def __init__(self, *args, **kwargs):
         super(OdeCollisionGO, self).__init__(*args, **kwargs)
         self.odebody = OdeBody(base.odeWorld)
@@ -80,7 +82,7 @@ class OdeCollisionGO(OdeCollisionStaticGO):
         self.odebody.setQuaternion(self.getQuat(render))
         self.odegeom.setBody(self.odebody)
         self.odemass = OdeMass()
-        self.odemass.setSphere(1134, 1)
+        self.odemass.setSphere(self.density, 1)
         self.odebody.setMass(self.odemass)
 
     def setPos(self, *args):
@@ -114,9 +116,23 @@ class OdeCollisionGO(OdeCollisionStaticGO):
 
 class PlayerObject(OdeCollisionGO):
 
-    def updateTask(self, jumping = False):
-        if jumping:
-            self.odebody.addForce(Vec3(0,0,300000))
+    density = 1010 # Wikipedia said that 1010 kg/m3 is the average human body
+    jump_power = 700000
+
+    def __init__(self, *args, **kwargs):
+        super(PlayerObject, self).__init__(*args, **kwargs)
+        self.jump = False
+        self.currently_jumping = False
+
+    def updateTask(self):
+        if self.jump:
+            self.currently_jumping = True
+            self.odebody.setForce(Vec3(0,0,self.jump_power))
+            self.jump = False
+        elif not self.currently_jumping and self.odebody.getPosition().getZ() > self.node.getPos().getZ():
+            pos = self.odebody.getPosition()
+            pos.setZ(self.node.getPos().getZ())
+            self.odebody.setPosition(pos)
         self.node.setPos(self.odebody.getPosition())
         self.odebody.setQuaternion(self.node.getQuat(render))
         self.odebody.setTorque(Vec3(0,0,0))

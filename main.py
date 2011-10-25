@@ -75,7 +75,7 @@ def main():
             base.odeWorld.quickStep(globalClock.getDt())
             #for np, body in boxes:
             #    np.setPosQuat(render, body.getPosition(), Quat(body.getQuaternion()))
-            player.updateTask(pc.currently_jumping)
+            player.updateTask()
             base.odeCGroup.empty() # Clear the contact joints
 
         def makeCallWithArgs(fn, *args, **kwargs):

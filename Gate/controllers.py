@@ -74,3 +74,26 @@ class CameraControler(object):
     def follow(self, task):
         base.camera.lookAt(self.lookat)
         return task.cont
+
+class MouseControlledCamera(object):
+
+    def __init__(self, inobject = None):
+        taskMgr.add(self.mouseUpdate, 'cam_mouse')
+        self.inobject = inobject
+
+    def mouseUpdate(self, task):
+        md = base.win.getPointer(0)
+        x = md.getX()
+        y = md.getY()
+        if base.win.movePointer(0, base.win.getXSize()/2, base.win.getYSize()/2):
+            if self.inobject:
+                self.inobject.setH(self.inobject.getH() -  (x - base.win.getXSize()/2)*0.1)
+            base.camera.setP(base.camera.getP() - (y - base.win.getYSize()/2)*0.1)
+        return task.cont
+
+
+class InObjectCameraControler(MouseControlledCamera):
+
+    def __init__(self, inobject):
+        super(InObjectCameraControler, self).__init__(inobject)
+        base.camera.reparentTo(inobject)

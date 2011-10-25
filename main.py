@@ -61,13 +61,13 @@ def main():
         mplayer.play_random_track()
     if useOde:
         from Gate.objects import PlayerObject
-        from Gate.controllers import PlayerController, CameraControler
+        from Gate.controllers import PlayerController, InObjectCameraControler, CameraControler
         from panda3d.ode import OdeSphereGeom
         player = PlayerObject(model = 'models/sphere', colgeom = OdeSphereGeom(base.odeSpace, .6), colbits = BitMask32(0x00000002), catbits = BitMask32(0x00000001))
         player.node.setScale(0.3)
         #taskMgr.add(player.updateTask, "player_ode_update")
         pc = PlayerController(player, Vec3(1,1,5))
-        cc = CameraControler(Vec3(5,2,2), player.node, follow = True)
+        cc = InObjectCameraControler(player.node)
         # The task for our simulation
         def simulationTask(player):
             base.odeSpace.autoCollide() # Setup the contact joints

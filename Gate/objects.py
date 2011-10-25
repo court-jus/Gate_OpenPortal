@@ -114,7 +114,9 @@ class OdeCollisionGO(OdeCollisionStaticGO):
 
 class PlayerObject(OdeCollisionGO):
 
-    def updateTask(self):
+    def updateTask(self, jumping = False):
+        if jumping:
+            self.odebody.addForce(Vec3(0,0,300000))
         self.node.setPos(self.odebody.getPosition())
         self.odebody.setQuaternion(self.node.getQuat(render))
         self.odebody.setTorque(Vec3(0,0,0))

@@ -18,10 +18,10 @@ class PlayerController(object):
         self.origin = origin
         self.speed = RUN_SPEED
         self.walk = self.STOP
-        #self.readyToJump = False
+        self.currently_jumping = False
 
-        base.accept( "space" , self.jump)
-        base.accept( "space-up" , self.jump)
+        base.accept( "space" , self.jump, [True])
+        base.accept( "space-up" , self.jump, [False])
         base.accept( "z" if AZERTY else "w" , self.addToWalk,[self.FORWARD])
         base.accept( "s" , self.addToWalk,[self.BACK] )
         base.accept( "s-up" , self.addToWalk,[-self.BACK] )
@@ -52,8 +52,9 @@ class PlayerController(object):
     def stop(self, entry):
         self.walk = self.STOP
 
-    def jump(self, *args, **kwargs):
-        self.player.odebody.setForce(Vec3(0,0,100))
+    def jump(self, jumpstatus):
+        self.currently_jumping = jumpstatus
+        #self.player.odebody.setForce(Vec3(0,10000,0))
     def moveUpdate(self, task):
         #self.player.setPos(self.player.node, self.walk*globalClock.getDt()*self.speed)
         walk_vec = self.walk * self.speed

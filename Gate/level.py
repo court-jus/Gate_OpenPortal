@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from panda3d.core import BitMask32, Quat, VBase4
+from panda3d.core import BitMask32, Quat, VBase4, Vec3
 from panda3d.core import TextNode, TransparencyAttrib, CollisionNode, CollisionSphere, CollisionHandlerEvent
 from panda3d.core import Spotlight, DirectionalLight, PointLight, AmbientLight
 from Gate.constants import *
@@ -7,7 +7,10 @@ import json
 
 class LevelCube(object):
 
-    def __init__(self, model = "cube", texture = "dallage", pos = (0,0,0), scale = (1,1,1)):
+    def __init__(self, model = "cube", texture = "dallage", pos = (0,0,0), scale = (1,1,1), cubetype = "D"):
+        # Keep that for later reference
+        self.cubetype = cubetype
+
         self.node = loader.loadModel(model)
         if texture:
             tex = loader.loadTexture("models/tex/%s.png" % (texture,))
@@ -26,7 +29,7 @@ class NoPortalCube(LevelCube):
 
 class LevelExit(LevelCube):
 
-    def __init__(self, model = "models/sphere", texture = "exit", pos = (0,0,0), scale = (1,1,1)):
+    def __init__(self, model = "models/sphere", texture = "exit", pos = (0,0,0), scale = (1,1,1), cubetype = "D"):
         super(LevelExit, self).__init__(model, texture, pos, scale)
         #self.node.setTransparency(TransparencyAttrib.MAlpha)
         self.node.setTag('noportals', '1')
@@ -43,7 +46,7 @@ class LevelExit(LevelCube):
 
 class LavaCube(LevelCube):
 
-    def __init__(self, model = "cube_nocol", texture = "lava", pos = (0,0,0), scale = (1,1,1)):
+    def __init__(self, model = "cube_nocol", texture = "lava", pos = (0,0,0), scale = (1,1,1), cubetype = "D"):
         super(LavaCube, self).__init__(model, texture, pos, scale)
         cn = CollisionNode('lava')
         cn.setFromCollideMask(COLLISIONMASKS['lava'])
@@ -59,6 +62,7 @@ class LavaCube(LevelCube):
 class Level(object):
 
     LEGEND = {
+        "D" : ("dallage", LevelCube),
         "#" : ("stonewall", LevelCube),
         "=" : ("woodplanks", LevelCube),
         "A" : ("A", LevelCube),
@@ -74,6 +78,13 @@ class Level(object):
         self.cube_size = 1
         self.cubes = []
         self.settings = None
+        self.editor_mode = False
+
+    def makeCube(self, cubetype, pos, scale):
+        texture, model = self.LEGEND.get(cubetype, ('dallage', LevelCube))
+        if self.editor_mode and model in (NoPortalCube, LevelExit, LavaCube):
+            model = LevelCube
+        self.cubes.append(model(texture = texture, pos = pos, scale = scale, cubetype = cubetype))
 
     def clearlevel(self):
         for c in self.cubes:
@@ -120,21 +131,72 @@ class Level(object):
                 continue
             for char in line.strip():
                 if char != " ":
-                    texture, model = self.LEGEND.get(char, ("dallage", LevelCube))
-                    self.cubes.append(model(texture = texture, pos = (x, y, z), scale = (cs/2., cs/2., cs/2.)))
+                    self.makeCube(char, (x,y,z), (cs/2.,cs/2.,cs/2.))
                 x += cs
             y += cs
             x = 0
 
+    # EDITOR MODE
+    def createempty(self):
+        self.cubes.append(LevelCube())
+        self.settings = LevelSettings()
+        self.editor_mode = True
+
+    def copyCube(self, cube, normal):
+        if cube is None:
+            if not self.cubes:
+                self.cubes.append(LevelCube())
+            return
+        nl = [c.node for c in self.cubes]
+        lc = self.cubes[nl.index(cube)]
+        x, y, z = cube.getPos()
+        newPos = Vec3(x, y, z) + (normal * self.cube_size * 2.)
+        self.makeCube(lc.cubetype, (newPos.getX(), newPos.getY(), newPos.getZ()), lc.node.getScale())
+
+    def deleteCube(self, cube):
+        if cube is None:
+            return
+        nl = [c.node for c in self.cubes]
+        lc = self.cubes[nl.index(cube)]
+        lc.node.removeNode()
+        self.cubes.remove(lc)
+
+    def changeCube(self, cube, step):
+        if cube is None:
+            return
+        if not cube.hasParent():
+            return
+        if cube.getParent() != render:
+            return
+        nl = [c.node for c in self.cubes]
+        lc = self.cubes[nl.index(cube)]
+        pos = cube.getPos()
+        scale = cube.getScale()
+        
+        cubetype = lc.cubetype
+        keys = self.LEGEND.keys()
+        keys.sort()
+        idx = keys.index(cubetype)
+        idx += step
+        if idx == len(keys):
+            idx = 0
+        if idx == -1:
+            idx = len(keys) - 1
+        newcubetype = keys[idx]
+
+        self.deleteCube(cube)
+        self.makeCube(newcubetype, pos, scale)
+
 class LevelSettings(object):
 
     DEFAULTS = {
-        'origin' : (42,42,42),
+        'origin' : (0,0,2),
         'next_level' : None,
         'pointlights': [],
         }
-    def __init__(self, json_data):
+    def __init__(self, json_data = None):
         for k, v in self.DEFAULTS.items():
             setattr(self, k, v)
-        for k, v in json.loads(json_data).items():
-            setattr(self, k, v)
+        if json_data:
+            for k, v in json.loads(json_data).items():
+                setattr(self, k, v)

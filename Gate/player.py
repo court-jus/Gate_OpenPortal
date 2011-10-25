@@ -36,6 +36,8 @@ class Player(object):
         self.base = base
         self.fps = fps
         self.speed = RUN_SPEED
+        if self.fps.editor_mode:
+            self.speed = self.speed * 3
         self.walk = self.STOP
         self.strafe = self.STOP
         self.readyToJump = False
@@ -197,8 +199,14 @@ class Player(object):
         self.base.accept( "r-up" , self.resetPosition )
         self.base.accept( "p-up" , self.showPosition )
         self.base.accept( "b-up" , self.deBug )
-        self.base.accept( "mouse1" , self.fireBlue )
-        self.base.accept( "mouse3" , self.fireOrange )
+        if self.fps.editor_mode:
+            self.base.accept( "mouse1" , self.selectCubeForCopy )
+            self.base.accept( "wheel_up" , self.selectCubeForChange, [1] )
+            self.base.accept( "wheel_down" , self.selectCubeForChange, [-1] )
+            self.base.accept( "mouse3" , self.selectCubeForDelete )
+        else:
+            self.base.accept( "mouse1" , self.fireBlue )
+            self.base.accept( "mouse3" , self.fireOrange )
         # Portal-ing events
         self.base.accept( "bluePortal-into-player" , self.enterPortal, ["blue"] )
         self.base.accept( "orangePortal-into-player" , self.enterPortal, ["orange"] )
@@ -208,8 +216,11 @@ class Player(object):
         self.base.accept( "lava-into-player" , self.fallIntoLava)
         # init mouse update task
         taskMgr.add(self.mouseUpdate, 'mouse-task')
-        taskMgr.add(self.moveUpdate, 'move-task')
-        taskMgr.add(self.jumpUpdate, 'jump-task')
+        if self.fps.editor_mode:
+            taskMgr.add(self.moveInEditor, 'move-task')
+        else:
+            taskMgr.add(self.moveUpdate, 'move-task')
+            taskMgr.add(self.jumpUpdate, 'jump-task')
 
     def deBug(self):
         import pdb
@@ -242,14 +253,16 @@ class Player(object):
         y = md.getY()
         if self.base.win.movePointer(0, self.base.win.getXSize()/2, self.base.win.getYSize()/2):
             self.node.setH(self.node.getH() -  (x - self.base.win.getXSize()/2)*0.1)
-            self.base.camera.setP(self.base.camera.getP() - (y - self.base.win.getYSize()/2)*0.1)
+            if self.fps.editor_mode:
+                self.node.setP(self.node.getP() - (y - self.base.win.getYSize()/2)*0.1)
+            else:
+                self.base.camera.setP(self.base.camera.getP() - (y - self.base.win.getYSize()/2)*0.1)
             self.canSetTarget = True
             self.bcamera.lookAt(self.bluePortal, self.node.getPos(self.orangePortal))
             self.ocamera.lookAt(self.orangePortal, self.node.getPos(self.bluePortal))
             #self.canPortal = ['blue','orange']
         return task.cont
 
-    #@oldpostracker
     def moveUpdate(self,task):
         """ this task makes the player move """
         # move where the keys set it
@@ -355,3 +368,28 @@ class Player(object):
         else:
             print "You won !"
             sys.exit(0)
+
+    # EDITOR MODE
+    def selectCube(self):
+        self.firingHandler.sortEntries()
+        if self.firingHandler.getNumEntries() > 0:
+            closest = self.firingHandler.getEntry(0)
+            return closest.getIntoNodePath().getParent().getParent(), closest.getSurfacePoint(render), closest.getSurfaceNormal(render) # render/cube.egg/-PandaNode/-GeomNode
+        else:
+            return None, None, None
+
+    def selectCubeForCopy(self):
+        cube, point, normal = self.selectCube()
+        self.fps.level.copyCube(cube, normal)
+
+    def selectCubeForDelete(self):
+        cube, point, normal = self.selectCube()
+        self.fps.level.deleteCube(cube)
+
+    def selectCubeForChange(self, step = 1):
+        cube, point, normal = self.selectCube()
+        self.fps.level.changeCube(cube, step)
+
+    def moveInEditor(self,task):
+        self.node.setPos(self.node,(self.walk + self.strafe)*globalClock.getDt()*self.speed)
+        return task.cont

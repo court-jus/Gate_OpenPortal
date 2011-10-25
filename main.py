@@ -88,10 +88,10 @@ def main():
     else:
         player = Player(base, fps)
 
-    def deBug(fps, osd, mplayer, player):
+    def deBug(fps, osd, mplayer, player, pc):
         import pdb
         pdb.set_trace()
-    base.accept( "b-up" , deBug, [fps, osd, mplayer, player] )
+    base.accept("b-up" , deBug, [fps, osd, mplayer, player, pc])
 
     # And run the ShowBase
     base.run()

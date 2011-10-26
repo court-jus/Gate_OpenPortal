@@ -38,8 +38,6 @@ class Player(object):
         self.base = base
         self.fps = fps
         self.speed = RUN_SPEED
-        if self.fps.editor_mode:
-            self.speed = self.speed * 5
         self.walk = self.STOP
         self.readyToJump = False
         self.intoPortal = None
@@ -55,7 +53,13 @@ class Player(object):
         self.makePortals()
         self.setUpCamera()
         self.createCollisions()
-        self.attachControls()
+        if self.fps.editor_mode:
+            self.speed = self.speed * 5
+            self.attachEditorControls()
+            self.attachEditorTasks()
+        else:
+            self.attachStandardControls()
+            self.attachStandardTasks()
 
     def loadModel(self):
         """ make the nodepath for player """
@@ -182,10 +186,7 @@ class Player(object):
         self.base.cTrav.addCollider(np, h)
 
 
-    def attachControls(self):
-        """ attach key events """
-        self.base.accept( "space" , self.__setattr__,["readyToJump",True])
-        self.base.accept( "space-up" , self.__setattr__,["readyToJump",False])
+    def attachCommonControls(self):
         self.base.accept( "z" if AZERTY else "w" , self.addWalk,[self.FORWARD])
         self.base.accept( "z-up" if AZERTY else "w-up" , self.addWalk,[-self.FORWARD] )
         self.base.accept( "s" , self.addWalk,[self.BACK] )
@@ -194,38 +195,46 @@ class Player(object):
         self.base.accept( "q-up" if AZERTY else "a-up" , self.addWalk,[-self.LEFT] )
         self.base.accept( "d" , self.addWalk,[self.RIGHT] )
         self.base.accept( "d-up" , self.addWalk,[-self.RIGHT] )
-        self.base.accept( "c-up" , self.__setattr__,["intoPortal",None] )
-        self.base.accept( "e-up" , self.erasePortals )
         self.base.accept( "r-up" , self.resetPosition )
         self.base.accept( "p-up" , self.showPosition )
         self.base.accept( "b-up" , self.deBug )
-        if self.fps.editor_mode:
-            self.base.accept( "mouse1" , self.selectCubeForCopy, [1])
-            self.base.accept( "wheel_up" , self.selectCubeForChange, [1] )
-            self.base.accept( "wheel_down" , self.selectCubeForChange, [-1] )
-            self.base.accept( "mouse3" , self.selectCubeForDelete )
-            for i in range(1,10):
-                self.base.accept( "%i-up" % (i,), self.selectCubeForCopy, [i])
-            for key, vec in [("e",self.FLYUP),("c", self.FLYDN)]:
-                self.base.accept(key, self.addWalk, [vec])
-                self.base.accept(key + "-up", self.addWalk, [-vec])
-        else:
-            self.base.accept( "mouse1" , self.fireBlue )
-            self.base.accept( "mouse3" , self.fireOrange )
-        # Portal-ing events
+
+    def attachStandardControls(self):
+        self.attachCommonControls()
+        self.base.accept( "space" , self.__setattr__,["readyToJump",True])
+        self.base.accept( "space-up" , self.__setattr__,["readyToJump",False])
+        self.base.accept( "c-up" , self.__setattr__,["intoPortal",None] )
+        self.base.accept( "e-up" , self.erasePortals )
+        self.base.accept( "mouse1" , self.fireBlue )
+        self.base.accept( "mouse3" , self.fireOrange )
+        # Events
         self.base.accept( "bluePortal-into-player" , self.enterPortal, ["blue"] )
         self.base.accept( "orangePortal-into-player" , self.enterPortal, ["orange"] )
         self.base.accept( "bluePortal-outof-player" , self.exitPortal, ["blue"] )
         self.base.accept( "orangePortal-outof-player" , self.exitPortal, ["orange"] )
         self.base.accept( "levelExit-into-player" , self.levelExit)
         self.base.accept( "lava-into-player" , self.fallIntoLava)
-        # init mouse update task
+
+    def attachStandardTasks(self):
         taskMgr.add(self.mouseUpdate, 'mouse-task')
-        if self.fps.editor_mode:
-            taskMgr.add(self.moveInEditor, 'move-task')
-        else:
-            taskMgr.add(self.moveUpdate, 'move-task')
-            taskMgr.add(self.jumpUpdate, 'jump-task')
+        taskMgr.add(self.moveUpdate, 'move-task')
+        taskMgr.add(self.jumpUpdate, 'jump-task')
+
+    def attachEditorControls(self):
+        self.attachCommonControls()
+        self.base.accept( "mouse1" , self.selectCubeForCopy, [1])
+        self.base.accept( "wheel_up" , self.selectCubeForChange, [1] )
+        self.base.accept( "wheel_down" , self.selectCubeForChange, [-1] )
+        self.base.accept( "mouse3" , self.selectCubeForDelete )
+        for i in range(1,10):
+            self.base.accept( "%i-up" % (i,), self.selectCubeForCopy, [i])
+        for key, vec in [("a" if AZERTY else "q", self.FLYUP),("w" if AZERTY else "z", self.FLYDN)]:
+            self.base.accept(key, self.addWalk, [vec])
+            self.base.accept(key + "-up", self.addWalk, [-vec])
+
+    def attachEditorTasks(self):
+        taskMgr.add(self.mouseUpdate, 'mouse-task')
+        taskMgr.add(self.moveInEditor, 'move-task')
 
     def deBug(self):
         import pdb

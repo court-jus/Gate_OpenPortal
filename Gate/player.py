@@ -26,6 +26,8 @@ class Player(object):
     BACK = Vec3(0,-1,0)
     LEFT = Vec3(-1,0,0)
     RIGHT = Vec3(1,0,0)
+    FLYUP = Vec3(0,0,1)
+    FLYDN = Vec3(0,0,-1)
     STOP = Vec3(0)
     PORTAL_CYCLE = {
         'blue' : 'orange',
@@ -37,9 +39,8 @@ class Player(object):
         self.fps = fps
         self.speed = RUN_SPEED
         if self.fps.editor_mode:
-            self.speed = self.speed * 3
+            self.speed = self.speed * 5
         self.walk = self.STOP
-        self.strafe = self.STOP
         self.readyToJump = False
         self.intoPortal = None
         self.mass = Mass()
@@ -185,15 +186,14 @@ class Player(object):
         """ attach key events """
         self.base.accept( "space" , self.__setattr__,["readyToJump",True])
         self.base.accept( "space-up" , self.__setattr__,["readyToJump",False])
-        self.base.accept( "s" , self.__setattr__,["walk",self.STOP] )
-        self.base.accept( "z" if AZERTY else "w" , self.__setattr__,["walk",self.FORWARD])
-        self.base.accept( "s" , self.__setattr__,["walk",self.BACK] )
-        self.base.accept( "s-up" , self.__setattr__,["walk",self.STOP] )
-        self.base.accept( "z-up" if AZERTY else "w-up" , self.__setattr__,["walk",self.STOP] )
-        self.base.accept( "q" if AZERTY else "a" , self.__setattr__,["strafe",self.LEFT])
-        self.base.accept( "d" , self.__setattr__,["strafe",self.RIGHT] )
-        self.base.accept( "q-up" if AZERTY else "a-up" , self.__setattr__,["strafe",self.STOP] )
-        self.base.accept( "d-up" , self.__setattr__,["strafe",self.STOP] )
+        self.base.accept( "z" if AZERTY else "w" , self.addWalk,[self.FORWARD])
+        self.base.accept( "z-up" if AZERTY else "w-up" , self.addWalk,[-self.FORWARD] )
+        self.base.accept( "s" , self.addWalk,[self.BACK] )
+        self.base.accept( "s-up" , self.addWalk,[-self.BACK] )
+        self.base.accept( "q" if AZERTY else "a" , self.addWalk,[self.LEFT])
+        self.base.accept( "q-up" if AZERTY else "a-up" , self.addWalk,[-self.LEFT] )
+        self.base.accept( "d" , self.addWalk,[self.RIGHT] )
+        self.base.accept( "d-up" , self.addWalk,[-self.RIGHT] )
         self.base.accept( "c-up" , self.__setattr__,["intoPortal",None] )
         self.base.accept( "e-up" , self.erasePortals )
         self.base.accept( "r-up" , self.resetPosition )
@@ -206,6 +206,9 @@ class Player(object):
             self.base.accept( "mouse3" , self.selectCubeForDelete )
             for i in range(1,10):
                 self.base.accept( "%i-up" % (i,), self.selectCubeForCopy, [i])
+            for key, vec in [("e",self.FLYUP),("c", self.FLYDN)]:
+                self.base.accept(key, self.addWalk, [vec])
+                self.base.accept(key + "-up", self.addWalk, [-vec])
         else:
             self.base.accept( "mouse1" , self.fireBlue )
             self.base.accept( "mouse3" , self.fireOrange )
@@ -265,10 +268,13 @@ class Player(object):
             #self.canPortal = ['blue','orange']
         return task.cont
 
+    def addWalk(self, vec):
+        self.walk += vec
+
     def moveUpdate(self,task):
         """ this task makes the player move """
         # move where the keys set it
-        self.node.setPos(self.node,(self.walk + self.strafe)*globalClock.getDt()*self.speed)
+        self.node.setPos(self.node, self.walk*globalClock.getDt()*self.speed)
         return task.cont
 
     #@oldpostracker
@@ -334,8 +340,6 @@ class Player(object):
         #print "ENTERP", self.canPortal
         #print self.node.getPos()
         if self.intoPortal is None and color in self.canPortal:
-            #self.walk = self.STOP
-            #self.strafe = self.STOP
             self.node.setHpr(VBase3(0,0,0))
             self.intoPortal = color
             portal = {"orange": self.bluePortal, "blue": self.orangePortal}.get(color)
@@ -347,10 +351,10 @@ class Player(object):
             self.mass.pos = self.node.getPos()
             #self.node.setR(portal, self.node.getR(otherportal))
             # Make half a turn (only if we straffing without walking)
-            if self.walk == self.STOP and self.strafe != self.STOP:
+            #if self.walk == self.STOP and self.strafe != self.STOP:
                 #print self.node.getPos()
                 #print "STRAFE"
-                self.node.setH(180 - self.node.getH())
+            #    self.node.setH(180 - self.node.getH())
                 #print self.node.getPos()
             #print "FIN ENTERP", portal.getPos()
     #@oldpostracker
@@ -366,7 +370,6 @@ class Player(object):
             self.resetPosition()
             self.erasePortals()
             self.walk = self.STOP
-            self.strafe = self.STOP
         else:
             print "You won !"
             sys.exit(0)
@@ -393,5 +396,5 @@ class Player(object):
         self.fps.level.changeCube(cube, step)
 
     def moveInEditor(self,task):
-        self.node.setPos(self.node,(self.walk + self.strafe)*globalClock.getDt()*self.speed)
+        self.node.setPos(self.node, self.walk*globalClock.getDt()*self.speed)
         return task.cont

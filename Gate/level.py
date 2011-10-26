@@ -142,7 +142,7 @@ class Level(object):
         self.settings = LevelSettings()
         self.editor_mode = True
 
-    def copyCube(self, cube, normal):
+    def copyCube(self, cube, normal, qty = 1):
         if cube is None:
             if not self.cubes:
                 self.cubes.append(LevelCube())
@@ -150,8 +150,9 @@ class Level(object):
         nl = [c.node for c in self.cubes]
         lc = self.cubes[nl.index(cube)]
         x, y, z = cube.getPos()
-        newPos = Vec3(x, y, z) + (normal * self.cube_size * 2.)
-        self.makeCube(lc.cubetype, (newPos.getX(), newPos.getY(), newPos.getZ()), lc.node.getScale())
+        for i in range(qty):
+            newPos = Vec3(x, y, z) + (normal * self.cube_size * 2. * (i + 1))
+            self.makeCube(lc.cubetype, (newPos.getX(), newPos.getY(), newPos.getZ()), lc.node.getScale())
 
     def deleteCube(self, cube):
         if cube is None:

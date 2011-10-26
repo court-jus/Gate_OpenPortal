@@ -200,10 +200,12 @@ class Player(object):
         self.base.accept( "p-up" , self.showPosition )
         self.base.accept( "b-up" , self.deBug )
         if self.fps.editor_mode:
-            self.base.accept( "mouse1" , self.selectCubeForCopy )
+            self.base.accept( "mouse1" , self.selectCubeForCopy, [1])
             self.base.accept( "wheel_up" , self.selectCubeForChange, [1] )
             self.base.accept( "wheel_down" , self.selectCubeForChange, [-1] )
             self.base.accept( "mouse3" , self.selectCubeForDelete )
+            for i in range(1,10):
+                self.base.accept( "%i-up" % (i,), self.selectCubeForCopy, [i])
         else:
             self.base.accept( "mouse1" , self.fireBlue )
             self.base.accept( "mouse3" , self.fireOrange )
@@ -378,9 +380,9 @@ class Player(object):
         else:
             return None, None, None
 
-    def selectCubeForCopy(self):
+    def selectCubeForCopy(self, qty = 1):
         cube, point, normal = self.selectCube()
-        self.fps.level.copyCube(cube, normal)
+        self.fps.level.copyCube(cube, normal, qty)
 
     def selectCubeForDelete(self):
         cube, point, normal = self.selectCube()

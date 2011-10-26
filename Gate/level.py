@@ -154,6 +154,32 @@ class Level(object):
             newPos = Vec3(x, y, z) + (normal * self.cube_size * 2. * (i + 1))
             self.makeCube(lc.cubetype, (newPos.getX(), newPos.getY(), newPos.getZ()), lc.node.getScale())
 
+    def createRectangle(self, fromnode, tonode):
+        if fromnode is None or tonode is None:
+            return
+        nl = [c.node for c in self.cubes]
+        lc = self.cubes[nl.index(fromnode)]
+        x1, y1, z1 = fromnode.getPos()
+        x2, y2, z2 = tonode.getPos()
+        ir = lambda x: int(round(x))
+        x1, y1, z1, x2, y2, z2 = ir(x1), ir(y1), ir(z1), ir(x2), ir(y2), ir(z2)
+        sx = int(x1 < x2) * 2 - 1
+        sy = int(y1 < y2) * 2 - 1
+        cs = self.cube_size * 2
+        cube_created = False
+
+        for x in range(x1, x2, sx):
+            if x % cs != 0:
+                continue
+            for y in range(y1, y2, sy):
+                if y % cs != 0:
+                    continue
+                newPos = Vec3(x, y, z1)
+                self.makeCube(lc.cubetype, (newPos.getX(), newPos.getY(), newPos.getZ()), lc.node.getScale())
+                cube_created = True
+        if cube_created:
+            self.deleteCube(fromnode)
+
     def deleteCube(self, cube):
         if cube is None:
             return

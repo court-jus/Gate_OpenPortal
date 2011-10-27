@@ -3,11 +3,15 @@
 from direct.showbase.ShowBase import ShowBase
 from Gate.fps import FPS
 from Gate.osd import OSD
+from Gate.controllers import GuiController, PlayerController, InObjectCameraControler, CameraControler
 from Gate.player import Player
 from Gate.sound import MusicPlayer
 from optparse import OptionParser
 from panda3d.core import WindowProperties, Vec3, BitMask32, Vec4
 from panda3d.ode import OdePlaneGeom, OdeUtil
+
+import os
+import Gate.constants
 
 useOde = True
 
@@ -19,6 +23,8 @@ def main():
     levelname = 'level1'
     if args:
         levelname = args[0]
+
+    Gate.constants.APP_DIR = os.path.abspath(os.path.dirname(__file__))
 
     # Instantiate the ShowBase
     base = ShowBase()
@@ -61,7 +67,6 @@ def main():
         mplayer.play_random_track()
     if useOde:
         from Gate.objects import PlayerObject
-        from Gate.controllers import PlayerController, InObjectCameraControler, CameraControler
         from panda3d.ode import OdeSphereGeom
         player = PlayerObject(model = 'models/sphere', colgeom = OdeSphereGeom(base.odeSpace, .6), colbits = BitMask32(0x00000002), catbits = BitMask32(0x00000001))
         player.node.setScale(0.3)
@@ -92,6 +97,8 @@ def main():
         import pdb
         pdb.set_trace()
     base.accept("b-up" , deBug, [fps, osd, mplayer, player, pc])
+
+    gui = GuiController(fps, pc, osd, mplayer, cc)
 
     # And run the ShowBase
     base.run()

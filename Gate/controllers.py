@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from Gate.constants import *
-from panda3d.core import Vec3, VBase3, Mat4
+import Gate.constants
+from panda3d.core import Vec3, VBase3, Mat4, WindowProperties
+from direct.gui.DirectGui import *
+import os
 
 class PlayerController(object):
     """
@@ -17,10 +19,12 @@ class PlayerController(object):
     def __init__(self, player, origin):
         self.player = player
         self.origin = origin
-        self.speed = RUN_SPEED
+        self.speed = Gate.constants.RUN_SPEED
         self.walk = self.STOP
         self.wants_to_jump = False
         self.allowed_to_jump = False
+
+        AZERTY = Gate.constants.AZERTY
 
         base.accept( "space" , self.jump, [True])
         base.accept( "space-up" , self.jump, [False])
@@ -98,9 +102,12 @@ class MouseControlledCamera(object):
 
     def __init__(self, inobject = None):
         taskMgr.add(self.mouseUpdate, 'cam_mouse')
+        self.active = True
         self.inobject = inobject
 
     def mouseUpdate(self, task):
+        if not self.active:
+            return
         md = base.win.getPointer(0)
         x = md.getX()
         y = md.getY()
@@ -116,3 +123,46 @@ class InObjectCameraControler(MouseControlledCamera):
     def __init__(self, inobject):
         super(InObjectCameraControler, self).__init__(inobject)
         base.camera.reparentTo(inobject)
+
+class GuiController(object):
+
+    def __init__(self, fps, playerc, osd, mplayer, camc):
+        self.fps = fps
+        self.playerc = playerc
+        self.osd = osd
+        self.mplayer = mplayer
+        self.camc = camc
+        self.level_list = self.list_levels()
+
+        self.setUpControls()
+
+    def setUpControls(self):
+        base.accept('f12', self.showMenu)
+
+    def list_levels(self):
+        levelspath = Gate.constants.APP_DIR
+        return [l.split('.')[0] for l in os.listdir(levelspath) if '.' in l and l.split('.')[1] == 'lvl']
+    def showMenu(self):
+        def menuCB(item):
+            print "Menu CB", item
+            if item in self.level_list:
+                print "This is a level !!"
+                self.fps.level.loadlevel(item)
+        frame = DirectFrame(
+            frameColor = ( 0,  0,   0,  0.4),
+            frameSize  = ( 0,  2,-0.1,  0.0),
+            pos = (-1,-1, 1.0))
+        level_items = ["Load a level"]
+        level_items.extend(self.level_list)
+        menu = DirectOptionMenu(
+            text="Gate",
+            scale = 0.1,
+            items = level_items,
+            highlightColor = (0.65,0.50,0.50, 1),
+            command = menuCB,
+            pos = (0,0,-0.08))
+        menu.reparentTo(frame)
+        wp = WindowProperties()
+        wp.setCursorHidden(False)
+        base.win.requestProperties(wp)
+        self.camc.active = False

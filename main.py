@@ -34,7 +34,7 @@ def main():
     mplayer = MusicPlayer(base, osd)
     if options.music:
         mplayer.play_random_track()
-    player = Player(base, fps)
+    player = Player(base, fps, osd)
 
     # And run the ShowBase
     base.run()

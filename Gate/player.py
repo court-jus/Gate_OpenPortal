@@ -34,9 +34,10 @@ class Player(object):
         'orange' : 'blue',
         }
 
-    def __init__(self, base, fps):
+    def __init__(self, base, fps, osd):
         self.base = base
         self.fps = fps
+        self.osd = osd
         self.speed = RUN_SPEED
         self.walk = self.STOP
         self.readyToJump = False
@@ -277,6 +278,9 @@ class Player(object):
             self.bcamera.lookAt(self.bluePortal, self.node.getPos(self.orangePortal))
             self.ocamera.lookAt(self.orangePortal, self.node.getPos(self.bluePortal))
             #self.canPortal = ['blue','orange']
+            if self.fps.editor_mode:
+                cube, point, normal = self.selectCube()
+                self.osd.updateTargetPosition(cube)
         return task.cont
 
     def addWalk(self, vec):
@@ -415,4 +419,5 @@ class Player(object):
 
     def moveInEditor(self,task):
         self.node.setPos(self.node, self.walk*globalClock.getDt()*self.speed)
+        self.osd.updatePosition(self.node)
         return task.cont

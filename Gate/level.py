@@ -182,6 +182,46 @@ class Level(object):
         if cube_created:
             self.deleteCube(fromnode)
 
+    def createRoom(self, fromnode, tonode):
+        if fromnode is None or tonode is None:
+            return
+        nl = [c.node for c in self.cubes]
+        lc = self.cubes[nl.index(fromnode)]
+        x1, y1, z1 = fromnode.getPos()
+        x2, y2, z2 = tonode.getPos()
+        ir = lambda x: int(round(x))
+        x1, y1, z1, x2, y2, z2 = ir(x1), ir(y1), ir(z1), ir(x2), ir(y2), ir(z2)
+        sx = int(x1 < x2) * 2 - 1
+        sy = int(y1 < y2) * 2 - 1
+        sz = int(z1 < z2) * 2 - 1
+        cs = self.cube_size/2.
+        cube_created = False
+
+        Xs = range(x1, x2, sx)
+        Ys = range(y1, y2, sy)
+        Zs = range(z1, z2, sz)
+
+        for xi, x in enumerate(Xs):
+            if x % cs != 0:
+                continue
+            for yi, y in enumerate(Ys):
+                if y % cs != 0:
+                    continue
+                for zi, z in enumerate(Zs):
+                    if z % cs != 0:
+                        continue
+                    if xi not in (0, len(Xs)-1) and\
+                       yi not in (0, len(Ys)-1) and\
+                       zi not in (0, len(Zs)-1):
+                        continue
+
+                    newPos = Vec3(x, y, z)
+                    self.makeCube(lc.cubetype, (newPos.getX(), newPos.getY(), newPos.getZ()), lc.node.getScale())
+                    cube_created = True
+        if cube_created:
+            self.deleteCube(fromnode)
+
+
     def deleteCube(self, cube):
         if cube is None:
             return

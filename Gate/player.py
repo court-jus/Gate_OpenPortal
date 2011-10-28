@@ -226,7 +226,8 @@ class Player(object):
         self.base.accept( "wheel_up" , self.selectCubeForChange, [1] )
         self.base.accept( "wheel_down" , self.selectCubeForChange, [-1] )
         self.base.accept( "mouse3" , self.selectCubeForDelete )
-        self.base.accept("x-up", self.selectCubeForRectangle)
+        self.base.accept("x", self.selectCubeForRectangle)
+        self.base.accept("shift-x", self.selectCubeForRectangle, [True])
         for i in range(1,10):
             self.base.accept( "%i-up" % (i,), self.selectCubeForCopy, [i])
         for key, vec in [("a" if AZERTY else "q", self.FLYUP),("w" if AZERTY else "z", self.FLYDN)]:
@@ -405,9 +406,12 @@ class Player(object):
         cube, point, normal = self.selectCube()
         self.fps.level.changeCube(cube, step)
 
-    def selectCubeForRectangle(self):
+    def selectCubeForRectangle(self, makeRoom = False):
         cube, point, normal = self.selectCube()
-        self.fps.level.createRectangle(cube, self.node) # creates a rectangle from the selected cube to the player(camera) position
+        if makeRoom:
+            self.fps.level.createRoom(cube, self.node) # creates a room from the selected cube to the player(camera) position
+        else:
+            self.fps.level.createRectangle(cube, self.node) # creates a rectangle from the selected cube to the player(camera) position
 
     def moveInEditor(self,task):
         self.node.setPos(self.node, self.walk*globalClock.getDt()*self.speed)

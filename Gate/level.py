@@ -138,14 +138,16 @@ class Level(object):
 
     # EDITOR MODE
     def createempty(self):
-        self.cubes.append(LevelCube())
+        cs = self.cube_size
+        self.cubes.append(LevelCube(scale = (cs/2.,cs/2.,cs/2.)))
         self.settings = LevelSettings()
         self.editor_mode = True
 
     def copyCube(self, cube, normal, qty = 1):
         if cube is None:
             if not self.cubes:
-                self.cubes.append(LevelCube())
+                cs = self.cube_size/2.
+                self.cubes.append(LevelCube(scale=(cs,cs,cs)))
             return
         nl = [c.node for c in self.cubes]
         lc = self.cubes[nl.index(cube)]
@@ -165,7 +167,7 @@ class Level(object):
         x1, y1, z1, x2, y2, z2 = ir(x1), ir(y1), ir(z1), ir(x2), ir(y2), ir(z2)
         sx = int(x1 < x2) * 2 - 1
         sy = int(y1 < y2) * 2 - 1
-        cs = self.cube_size * 2
+        cs = self.cube_size/2.
         cube_created = False
 
         for x in range(x1, x2, sx):

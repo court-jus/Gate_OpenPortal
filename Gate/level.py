@@ -76,7 +76,7 @@ class Level(object):
 
     def __init__(self):
         self.cube_size = 1
-        self.cubes = []
+        self.cubes_hash = {}
         self.settings = None
         self.editor_mode = False
 
@@ -84,13 +84,15 @@ class Level(object):
         texture, model = self.LEGEND.get(cubetype, ('dallage', LevelCube))
         if self.editor_mode and model in (NoPortalCube, LevelExit, LavaCube):
             model = LevelCube
-        self.cubes.append(model(texture = texture, pos = pos, scale = scale, cubetype = cubetype))
+        if not pos in self.cubes_hash:
+            the_cube = model(texture = texture, pos = pos, scale = scale, cubetype = cubetype)
+            self.cubes_hash[pos] = the_cube
 
     def clearlevel(self):
-        for c in self.cubes:
+        for c in self.cubes_hash.values():
             c.node.removeNode()
             del c
-        self.cubes = []
+        self.cubes_hash = {}
         self.settings = None
 
     def makeLights(self):
@@ -137,21 +139,28 @@ class Level(object):
             x = 0
 
     # EDITOR MODE
+    def addCube(self, cube):
+        pos = cube.node.getPos()
+        pos = (pos.getX(), pos.getY(), pos.getZ())
+        if not pos in self.cubes_hash:
+            self.cubes_hash[pos] = cube
+
     def createempty(self):
         cs = self.cube_size
-        self.cubes.append(LevelCube(scale = (cs/2.,cs/2.,cs/2.)))
+        self.addCube(LevelCube(scale = (cs/2.,cs/2.,cs/2.)))
         self.settings = LevelSettings()
         self.editor_mode = True
 
     def copyCube(self, cube, normal, qty = 1):
         if cube is None:
-            if not self.cubes:
+            if not self.cubes_hash:
                 cs = self.cube_size/2.
-                self.cubes.append(LevelCube(scale=(cs,cs,cs)))
+                self.addCube(LevelCube(scale=(cs,cs,cs)))
             return
-        nl = [c.node for c in self.cubes]
-        lc = self.cubes[nl.index(cube)]
         x, y, z = cube.getPos()
+        lc = self.cubes_hash.get((x,y,z))
+        if not lc:
+            return
         for i in range(qty):
             newPos = Vec3(x, y, z) + (normal * self.cube_size * 2. * (i + 1))
             self.makeCube(lc.cubetype, (newPos.getX(), newPos.getY(), newPos.getZ()), lc.node.getScale())
@@ -159,10 +168,11 @@ class Level(object):
     def createRectangle(self, fromnode, tonode):
         if fromnode is None or tonode is None:
             return
-        nl = [c.node for c in self.cubes]
-        lc = self.cubes[nl.index(fromnode)]
         x1, y1, z1 = fromnode.getPos()
         x2, y2, z2 = tonode.getPos()
+        lc = self.cubes_hash.get((x1,y1,z1))
+        if not lc:
+            return
         ir = lambda x: int(round(x))
         x1, y1, z1, x2, y2, z2 = ir(x1), ir(y1), ir(z1), ir(x2), ir(y2), ir(z2)
         sx = int(x1 < x2) * 2 - 1
@@ -185,10 +195,11 @@ class Level(object):
     def createRoom(self, fromnode, tonode):
         if fromnode is None or tonode is None:
             return
-        nl = [c.node for c in self.cubes]
-        lc = self.cubes[nl.index(fromnode)]
         x1, y1, z1 = fromnode.getPos()
         x2, y2, z2 = tonode.getPos()
+        lc = self.cubes_hash.get((x1,y1,z1))
+        if not lc:
+            return
         ir = lambda x: int(round(x))
         x1, y1, z1, x2, y2, z2 = ir(x1), ir(y1), ir(z1), ir(x2), ir(y2), ir(z2)
         sx = int(x1 < x2) * 2 - 1
@@ -225,10 +236,11 @@ class Level(object):
     def deleteCube(self, cube):
         if cube is None:
             return
-        nl = [c.node for c in self.cubes]
-        lc = self.cubes[nl.index(cube)]
+        x,y,z = cube.getPos()
+        lc = self.cubes_hash.pop((x,y,z))
+        if not lc:
+            return
         lc.node.removeNode()
-        self.cubes.remove(lc)
 
     def changeCube(self, cube, step):
         if cube is None:
@@ -237,10 +249,12 @@ class Level(object):
             return
         if cube.getParent() != render:
             return
-        nl = [c.node for c in self.cubes]
-        lc = self.cubes[nl.index(cube)]
-        pos = cube.getPos()
+        x,y,z = cube.getPos()
         scale = cube.getScale()
+        lc = self.cubes_hash.pop((x,y,z))
+        if not lc:
+            return
+        lc.node.removeNode()
         
         cubetype = lc.cubetype
         keys = self.LEGEND.keys()
@@ -253,8 +267,7 @@ class Level(object):
             idx = len(keys) - 1
         newcubetype = keys[idx]
 
-        self.deleteCube(cube)
-        self.makeCube(newcubetype, pos, scale)
+        self.makeCube(newcubetype, (x,y,z), scale)
 
 class LevelSettings(object):
 

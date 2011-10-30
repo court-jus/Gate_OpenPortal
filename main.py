@@ -30,7 +30,7 @@ def main():
 
     # Now instantiate Gate's own stuff
     fps = FPS(base, levelname)
-    osd = OSD(base)
+    osd = OSD(base, fps)
     mplayer = MusicPlayer(base, osd)
     if options.music:
         mplayer.play_random_track()

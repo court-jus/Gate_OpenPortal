@@ -60,6 +60,7 @@ When in editor mode, here are the available keys (AZERTY keyboard by default, ch
 * ``R`` : reset position
 * ``P`` : print position
 * ``B`` : enter pdb
+* ``F11`` : save the level
 
 Here is what you can do in editor mode :
 
@@ -69,3 +70,7 @@ Here is what you can do in editor mode :
 * Make a rectangle : look at a cube and use the ``X`` key to create a rectangle from this cube to where you are (the camera)
 * Make a room : look at a cube and use the ``Shift-X`` key to create a room (non-filled parallelepiped) from this cube to where you are (the camera)
 
+Notes
+-----
+
+When saving the level, the camera position in the editor is saved as the ``origin`` position in the ``.lvl`` file so it will be the player's original position.

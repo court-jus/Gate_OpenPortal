@@ -79,14 +79,17 @@ class Level(object):
         self.cubes_hash = {}
         self.settings = None
         self.editor_mode = False
+        self.editing_undo = []
 
-    def makeCube(self, cubetype, pos, scale):
+    def makeCube(self, cubetype, pos, scale, noundo = False):
         texture, model = self.LEGEND.get(cubetype, ('A', LevelCube))
         if self.editor_mode and model in (NoPortalCube, LevelExit, LavaCube):
             model = LevelCube
         if not pos in self.cubes_hash:
             the_cube = model(texture = texture, pos = pos, scale = scale, cubetype = cubetype)
             self.cubes_hash[pos] = the_cube
+            if self.editor_mode and not noundo:
+                self.editing_undo.append((self.deleteCubeAt, pos))
 
     def clearlevel(self):
         for c in self.cubes_hash.values():
@@ -167,19 +170,21 @@ class Level(object):
             fp.write("\n-Z-\n".join(planes))
 
     # EDITOR MODE
-    def addCube(self, cube):
+    def addCube(self, cube, noundo = False):
         pos = cube.node.getPos()
         pos = (pos.getX(), pos.getY(), pos.getZ())
         if not pos in self.cubes_hash:
             self.cubes_hash[pos] = cube
+            if not noundo:
+                self.editing_undo.append((self.deleteCubeAt, pos))
 
-    def createempty(self):
+    def createempty(self, noundo = False):
         cs = self.cube_size
         self.addCube(LevelCube(scale = (cs/2.,cs/2.,cs/2.)))
         self.settings = LevelSettings()
         self.editor_mode = True
 
-    def copyCube(self, cube, normal, qty = 1):
+    def copyCube(self, cube, normal, qty = 1, noundo = False):
         if cube is None:
             if not self.cubes_hash:
                 cs = self.cube_size/2.
@@ -193,7 +198,7 @@ class Level(object):
             newPos = Vec3(x, y, z) + (normal * self.cube_size * 2. * (i + 1))
             self.makeCube(lc.cubetype, (newPos.getX(), newPos.getY(), newPos.getZ()), lc.node.getScale())
 
-    def createRectangle(self, fromnode, tonode):
+    def createRectangle(self, fromnode, tonode, noundo = False):
         if fromnode is None or tonode is None:
             return
         x1, y1, z1 = fromnode.getPos()
@@ -216,7 +221,7 @@ class Level(object):
                 newPos = Vec3(x, y, z1)
                 self.makeCube(lc.cubetype, (newPos.getX(), newPos.getY(), newPos.getZ()), lc.node.getScale())
 
-    def createRoom(self, fromnode, tonode):
+    def createRoom(self, fromnode, tonode, noundo = False):
         if fromnode is None or tonode is None:
             return
         x1, y1, z1 = fromnode.getPos()
@@ -252,16 +257,28 @@ class Level(object):
                     newPos = Vec3(x, y, z)
                     self.makeCube(lc.cubetype, (newPos.getX(), newPos.getY(), newPos.getZ()), lc.node.getScale())
 
-    def deleteCube(self, cube):
-        if cube is None:
-            return
-        x,y,z = cube.getPos()
+    def deleteCubeAt(self, x, y, z, noundo = False):
         lc = self.cubes_hash.pop((x,y,z))
         if not lc:
             return
+        if not noundo:
+            self.editing_undo.append((self.makeCube, [lc.cubetype, (x,y,z), lc.node.getScale()]))
         lc.node.removeNode()
 
-    def changeCube(self, cube, step):
+    def deleteCube(self, cube, noundo = False):
+        if cube is None:
+            return
+        x,y,z = cube.getPos()
+        self.deleteCubeAt(x, y, z, noundo)
+
+    def replaceCube(self, x, y, z, newcubetype, noundo = False):
+        lc = self.cubes_hash.pop((x,y,z))
+        if not lc:
+            return
+        self.makeCube(newcubetype, (x,y,z), lc.node.getScale(), noundo = True)
+        lc.node.removeNode()
+
+    def changeCube(self, cube, step, noundo = False):
         if cube is None:
             return
         if not cube.hasParent():
@@ -270,10 +287,9 @@ class Level(object):
             return
         x,y,z = cube.getPos()
         scale = cube.getScale()
-        lc = self.cubes_hash.pop((x,y,z))
+        lc = self.cubes_hash.get((x,y,z))
         if not lc:
             return
-        lc.node.removeNode()
 
         cubetype = lc.cubetype
         keys = self.LEGEND.keys()
@@ -286,7 +302,16 @@ class Level(object):
             idx = len(keys) - 1
         newcubetype = keys[idx]
 
-        self.makeCube(newcubetype, (x,y,z), scale)
+        self.replaceCube(x, y, z, newcubetype)
+        if not noundo:
+            self.editing_undo.append((self.replaceCube, [x, y, z, cubetype]))
+
+    def undo(self, how_many = 1):
+        if not self.editing_undo:
+            return
+        for i in range(how_many):
+            fn, args = self.editing_undo.pop(len(self.editing_undo) - 1)
+            fn(*args, noundo = True)
 
     def addLightHere(self, pos):
         lights = self.settings.pointlights

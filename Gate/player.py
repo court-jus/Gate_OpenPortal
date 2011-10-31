@@ -231,8 +231,9 @@ class Player(object):
         self.base.accept( "mouse3" , self.selectCubeForDelete )
         self.base.accept("f11", self.saveLevel)
         self.base.accept("x", self.selectCubeForRectangle)
-        self.base.accept("l", self.addLightHere)
         self.base.accept("shift-x", self.selectCubeForRectangle, [True])
+        self.base.accept("l", self.addLightHere)
+        self.base.accept("u", self.fps.level.undo, [1])
         for i in range(1,10):
             self.base.accept( "%i-up" % (i,), self.selectCubeForCopy, [i])
         for key, vec in [("a" if AZERTY else "q", self.FLYUP),("w" if AZERTY else "z", self.FLYDN)]:

@@ -61,6 +61,7 @@ When in editor mode, here are the available keys (AZERTY keyboard by default, ch
 * ``P`` : print position
 * ``B`` : enter pdb
 * ``L`` : add a light at the current position
+* ``U`` : undo last edit
 * ``F11`` : save the level
 
 Here is what you can do in editor mode :

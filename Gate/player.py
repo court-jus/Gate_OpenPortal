@@ -429,7 +429,6 @@ class Player(object):
 
     def addLightHere(self):
         camerapos = [self.node.getX(), self.node.getY(), self.node.getZ()]
-        print "add light here",camerapos
         self.fps.level.addLightHere(camerapos)
 
     def moveInEditor(self,task):

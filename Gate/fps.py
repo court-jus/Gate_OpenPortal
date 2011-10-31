@@ -7,10 +7,10 @@ import sys
 import os
 
 class FPS(object):
-    def __init__(self, base, levelname = 'level1'):
+    def __init__(self, base, levelname, options):
         self.levelname = levelname
         self.base = base
-        self.editor_mode = False
+        self.editor_mode = options.editor
         self.initCollision()
         self.loadLevel()
         self.base.accept( "escape" , sys.exit)
@@ -26,4 +26,3 @@ class FPS(object):
             self.level.loadlevel(self.levelname)
         else:
             self.level.createempty()
-            self.editor_mode = True

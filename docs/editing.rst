@@ -48,9 +48,9 @@ Here are the ASCII chars availables :
 Use the ingame editor
 =====================
 
-If you don't want to edit ``.lvl`` files by hand, I'm working on an inline editor. To launch it, just start the game with an inexisting level as first argument: ::
+If you don't want to edit ``.lvl`` files by hand, I'm working on an inline editor. To launch it, just start the game with the ``-e`` flag before the name of the level: ::
 
-    ppython main.py mylevel
+    ppython main.py -e mylevel
 
 When in editor mode, here are the available keys (AZERTY keyboard by default, change this in ``Gate/constants.py`` if needed):
 
@@ -69,6 +69,13 @@ Here is what you can do in editor mode :
 * Delete an existing cube : right-clic a cube
 * Make a rectangle : look at a cube and use the ``X`` key to create a rectangle from this cube to where you are (the camera)
 * Make a room : look at a cube and use the ``Shift-X`` key to create a room (non-filled parallelepiped) from this cube to where you are (the camera)
+
+Loading an existing level
+-------------------------
+
+You can edit an existing level by launching the editor on it: ::
+
+    ppython main.py -e level1
 
 Notes
 -----

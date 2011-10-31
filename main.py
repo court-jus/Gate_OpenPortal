@@ -12,6 +12,7 @@ def main():
     # Handles CLI arguments
     p = OptionParser()
     p.add_option('-m', '--nomusic', action="store_false", dest="music", default = True, help = u"Disable music")
+    p.add_option('-e', '--editor-mode', action="store_true", dest="editor", default = False, help = u"Editor mode")
     options, args = p.parse_args()
     levelname = 'level1'
     if args:
@@ -29,7 +30,7 @@ def main():
     base.win.requestProperties(props)
 
     # Now instantiate Gate's own stuff
-    fps = FPS(base, levelname)
+    fps = FPS(base, levelname, options)
     osd = OSD(base, fps)
     mplayer = MusicPlayer(base, osd)
     if options.music:

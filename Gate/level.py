@@ -136,6 +136,36 @@ class Level(object):
             y += cs
             x = 0
 
+    def savelevel(self, levelname, camerapos):
+        filename = "%s.lvl" % (levelname,)
+        self.settings.origin = camerapos
+        jsonsettings = self.settings.jsonify()
+        norm_data = [] # This will hold the "normalized" map data
+        coords = self.cubes_hash.keys()
+        mx = int(min([c[0] for c in coords]))
+        my = int(min([c[1] for c in coords]))
+        mz = int(min([c[2] for c in coords]))
+        Mx = int(max([c[0] for c in coords]))
+        My = int(max([c[1] for c in coords]))
+        Mz = int(max([c[2] for c in coords]))
+        planes = []
+        for z in range(mz, Mz+1):
+            plane = []
+            for y in range(my, My+1):
+                line = []
+                for x in range(mx, Mx+1):
+                    cube = self.cubes_hash.get((x,y,z))
+                    ct = " "
+                    if cube:
+                        ct = cube.cubetype
+                    line.append(ct)
+                plane.append("".join(line))
+            planes.append("\n".join(plane))
+        with open(filename, "w") as fp:
+            fp.write(jsonsettings)
+            fp.write("\n-LEVEL-\n")
+            fp.write("\n-Z-\n".join(planes))
+
     # EDITOR MODE
     def addCube(self, cube):
         pos = cube.node.getPos()
@@ -265,9 +295,17 @@ class LevelSettings(object):
         'next_level' : None,
         'pointlights': [],
         }
+    ALLOWED_KEYS = ['origin', 'next_level', 'pointlights']
     def __init__(self, json_data = None):
         for k, v in self.DEFAULTS.items():
             setattr(self, k, v)
         if json_data:
             for k, v in json.loads(json_data).items():
-                setattr(self, k, v)
+                if k in self.ALLOWED_KEYS:
+                    setattr(self, k, v)
+
+    def jsonify(self):
+        settings_dict = {}
+        for k in self.ALLOWED_KEYS:
+            settings_dict[k] = getattr(self, k)
+        return json.dumps(settings_dict)

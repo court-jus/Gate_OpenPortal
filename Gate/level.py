@@ -141,16 +141,17 @@ class Level(object):
 
     def savelevel(self, levelname, camerapos):
         filename = "%s.lvl" % (levelname,)
-        self.settings.origin = camerapos
-        jsonsettings = self.settings.jsonify()
-        norm_data = [] # This will hold the "normalized" map data
         coords = self.cubes_hash.keys()
+
+        # Compute coord ranges
         mx = int(min([c[0] for c in coords]))
         my = int(min([c[1] for c in coords]))
         mz = int(min([c[2] for c in coords]))
         Mx = int(max([c[0] for c in coords]))
         My = int(max([c[1] for c in coords]))
         Mz = int(max([c[2] for c in coords]))
+
+        # Fill in arrays
         planes = []
         for z in range(mz, Mz+1):
             plane = []
@@ -164,6 +165,13 @@ class Level(object):
                     line.append(ct)
                 plane.append("".join(line))
             planes.append("\n".join(plane))
+
+        # Prepare the JSON part
+        cx, cy, cz = camerapos
+        self.settings.origin = (cx - mx, cy - my, cz - mz)
+        jsonsettings = self.settings.jsonify()
+
+        # Write all this stuff to the file
         with open(filename, "w") as fp:
             fp.write(jsonsettings)
             fp.write("\n-LEVEL-\n")

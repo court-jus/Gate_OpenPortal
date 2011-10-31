@@ -8,3 +8,6 @@ ignored_stuff/
 
 # Remove this when we have contacted artists
 music/*
+
+# Documentation Builds
+docs/_build/

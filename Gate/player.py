@@ -316,28 +316,32 @@ class Player(object):
 
     #@oldpostracker
     def enterPortal(self, color, collision):
-        #print "ENTERP", self.canPortal
-        #print self.node.getPos()
         if self.intoPortal is None and color in self.canPortal:
-            #self.walk = self.STOP
-            #self.strafe = self.STOP
-            self.node.setHpr(VBase3(0,0,0))
             self.intoPortal = color
             portal = {"orange": self.bluePortal, "blue": self.orangePortal}.get(color)
-            otherportal =  {"orange": self.orangePortal, "blue": self.bluePortal}.get(color)
-            # New HPR is relative to 'new' portal but it the 'same' value
-            # as the old HPR seen from the 'other' portal
-            self.node.setH(portal, 180-self.node.getH(otherportal))
-            self.node.setPos(portal.getPos() + self.walk / 10.)
+            otherportal = {"orange": self.orangePortal, "blue": self.bluePortal}.get(color)
+            # Handle horizontal portals :
+            if portal.getH() == 0:
+                self.node.setP(0)
+                self.node.setR(0)
+            elif otherportal.getH() == 0:
+                self.node.setH(portal.getH())
+                self.node.setP(0)
+                self.node.setR(0)
+            else:
+                # New HPR is relative to 'new' portal but it the 'same' value
+                # as the old HPR seen from the 'other' portal
+                oldh_fromportal = self.node.getH(otherportal)
+                self.node.setHpr(Vec3(0,0,0))
+                self.node.setH(portal, 180-oldh_fromportal)
+                newh_fromportal = self.node.getH(portal)
+            self.node.setPos(portal, self.walk / 10.)
             self.mass.pos = self.node.getPos()
             #self.node.setR(portal, self.node.getR(otherportal))
             # Make half a turn (only if we straffing without walking)
             if self.walk == self.STOP and self.strafe != self.STOP:
-                #print self.node.getPos()
-                #print "STRAFE"
                 self.node.setH(180 - self.node.getH())
-                #print self.node.getPos()
-            #print "FIN ENTERP", portal.getPos()
+                self.node.setPos(self.node, self.strafe * 10)
     #@oldpostracker
     def exitPortal(self, color, collision):
         # When you entered the blue portal, you have to exit the orange one

@@ -119,6 +119,8 @@ class Player(object):
         self.base.cam.node().setLens(pl)
         self.base.camera.reparentTo(self.node)
         self.base.camLens.setFov(100)
+        if self.fps.editor_mode:
+            self.node.lookAt(self.fps.level.cubes_hash.keys()[0])
 
     def createCollisions(self):
         """ create a collision solid and ray for the player """

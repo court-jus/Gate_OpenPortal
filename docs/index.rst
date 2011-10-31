@@ -6,7 +6,20 @@
 Welcome to Gate's documentation!
 ================================
 
-Contents:
+About
+-----
+
+My project is to create an OpenSource and Free game inspired by Portal_.
+
+Status
+------
+
+The Proof Of Concept is ready and you can get it on `my github`_.
+
+You'll need Panda3D_ to run the program. I'm using the .deb version on my Ubuntu_.
+
+Contents
+--------
 
 .. toctree::
    :maxdepth: 2
@@ -21,3 +34,7 @@ Contents:
    * :ref:`modindex`
    * :ref:`search`
 
+.. _Portal: http://en.wikipedia.org/wiki/Portal_(video_game)
+.. _`my github`: http://github.com/court-jus/Gate_OpenPortal
+.. _Panda3D: http://www.panda3d.org
+.. _Ubuntu: http://www.ubuntu.com

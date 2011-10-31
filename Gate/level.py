@@ -7,7 +7,7 @@ import json
 
 class LevelCube(object):
 
-    def __init__(self, model = "cube", texture = "dallage", pos = (0,0,0), scale = (1,1,1), cubetype = "D"):
+    def __init__(self, model = "cube", texture = "A", pos = (0,0,0), scale = (1,1,1), cubetype = "A"):
         # Keep that for later reference
         self.cubetype = cubetype
 
@@ -29,7 +29,7 @@ class NoPortalCube(LevelCube):
 
 class LevelExit(LevelCube):
 
-    def __init__(self, model = "models/sphere", texture = "exit", pos = (0,0,0), scale = (1,1,1), cubetype = "D"):
+    def __init__(self, model = "models/sphere", texture = "exit", pos = (0,0,0), scale = (1,1,1), cubetype = "A"):
         super(LevelExit, self).__init__(model, texture, pos, scale)
         #self.node.setTransparency(TransparencyAttrib.MAlpha)
         self.node.setTag('noportals', '1')
@@ -46,7 +46,7 @@ class LevelExit(LevelCube):
 
 class LavaCube(LevelCube):
 
-    def __init__(self, model = "cube_nocol", texture = "lava", pos = (0,0,0), scale = (1,1,1), cubetype = "D"):
+    def __init__(self, model = "cube_nocol", texture = "lava", pos = (0,0,0), scale = (1,1,1), cubetype = "A"):
         super(LavaCube, self).__init__(model, texture, pos, scale)
         cn = CollisionNode('lava')
         cn.setFromCollideMask(COLLISIONMASKS['lava'])
@@ -81,7 +81,7 @@ class Level(object):
         self.editor_mode = False
 
     def makeCube(self, cubetype, pos, scale):
-        texture, model = self.LEGEND.get(cubetype, ('dallage', LevelCube))
+        texture, model = self.LEGEND.get(cubetype, ('A', LevelCube))
         if self.editor_mode and model in (NoPortalCube, LevelExit, LavaCube):
             model = LevelCube
         if not pos in self.cubes_hash:

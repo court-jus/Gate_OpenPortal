@@ -229,6 +229,7 @@ class Player(object):
         self.base.accept( "mouse3" , self.selectCubeForDelete )
         self.base.accept("f11", self.saveLevel)
         self.base.accept("x", self.selectCubeForRectangle)
+        self.base.accept("l", self.addLightHere)
         self.base.accept("shift-x", self.selectCubeForRectangle, [True])
         for i in range(1,10):
             self.base.accept( "%i-up" % (i,), self.selectCubeForCopy, [i])
@@ -422,6 +423,11 @@ class Player(object):
         camerapos = [self.node.getX(), self.node.getY(), self.node.getZ()]
         levelname = self.fps.levelname
         self.fps.level.savelevel(levelname, camerapos)
+
+    def addLightHere(self):
+        camerapos = [self.node.getX(), self.node.getY(), self.node.getZ()]
+        print "add light here",camerapos
+        self.fps.level.addLightHere(camerapos)
 
     def moveInEditor(self,task):
         self.node.setPos(self.node, self.walk*globalClock.getDt()*self.speed)

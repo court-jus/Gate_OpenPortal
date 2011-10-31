@@ -20,7 +20,7 @@ def main():
 
     # Instantiate the ShowBase
     base = ShowBase()
-    
+
     # Toggle events verbosity :
     #base.messenger.toggleVerbose()
 

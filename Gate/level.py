@@ -288,6 +288,15 @@ class Level(object):
 
         self.makeCube(newcubetype, (x,y,z), scale)
 
+    def addLightHere(self, pos):
+        lights = self.settings.pointlights
+        lights.append(pos)
+        self.settings.pointlights = lights
+        lamp = PointLight('player_light')
+        lampnp = render.attachNewNode(lamp)
+        lampnp.setPos(*pos)
+        render.setLight(lampnp)
+
 class LevelSettings(object):
 
     DEFAULTS = {

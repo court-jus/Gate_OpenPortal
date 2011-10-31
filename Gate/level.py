@@ -125,13 +125,11 @@ class Level(object):
         x = z = y = 0
         cs = self.cube_size
         for line in map_data:
-            if not line.strip():
-                continue
             if line.startswith('-Z-'):
                 z += cs
                 y = 0
                 continue
-            for char in line.strip():
+            for char in line.rstrip():
                 if char != " ":
                     self.makeCube(char, (x,y,z), (cs/2.,cs/2.,cs/2.))
                 x += cs

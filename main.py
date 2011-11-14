@@ -8,6 +8,7 @@ from Gate.sound import MusicPlayer
 from optparse import OptionParser
 from panda3d.core import WindowProperties, Vec3, BitMask32, Vec4
 from panda3d.ode import OdePlaneGeom, OdeUtil
+from Gate.constants import *
 
 useOde = True
 
@@ -22,7 +23,7 @@ def main():
 
     # Instantiate the ShowBase
     base = ShowBase()
-    
+
     # Toggle events verbosity :
     #base.messenger.toggleVerbose()
 
@@ -55,19 +56,21 @@ def main():
     #ground = render.attachNewNode(cm.generate())
     #ground.setPos(0, 0, 0); ground.lookAt(0, 0, -1)
     groundGeom = OdePlaneGeom(base.odeSpace, Vec4(0, 0, 1, 0))
-    groundGeom.setCollideBits(BitMask32(0x00000001))
-    groundGeom.setCategoryBits(BitMask32(0x00000002))
+    groundGeom.setCollideBits(COLLISIONMASKS['player'])
+    groundGeom.setCategoryBits(COLLISIONMASKS['geometry'])
     if options.music:
         mplayer.play_random_track()
     if useOde:
+        base.camLens.setFov(100)
         from Gate.objects import PlayerObject
         from Gate.controllers import PlayerController, InObjectCameraControler, CameraControler
         from panda3d.ode import OdeSphereGeom
-        player = PlayerObject(model = 'models/sphere', colgeom = OdeSphereGeom(base.odeSpace, .6), colbits = BitMask32(0x00000002), catbits = BitMask32(0x00000001))
+        player = PlayerObject(model = 'models/sphere', colgeom = OdeSphereGeom(base.odeSpace, .6), colbits = COLLISIONMASKS['geometry'] | COLLISIONMASKS['portals'] | COLLISIONMASKS['exit'] | COLLISIONMASKS['lava'], catbits = COLLISIONMASKS['player'])
         player.node.setScale(0.3)
         #taskMgr.add(player.updateTask, "player_ode_update")
-        pc = PlayerController(player, Vec3(1,1,5))
+        pc = PlayerController(player, Vec3(1,1,5), fps)
         cc = InObjectCameraControler(player.node)
+        #cc = CameraControler(Vec3(5,2,3), player.node)
         # The task for our simulation
         def simulationTask(player):
             base.odeSpace.autoCollide() # Setup the contact joints

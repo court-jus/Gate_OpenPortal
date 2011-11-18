@@ -23,7 +23,6 @@ class PlayerController(object):
         self.walk = self.STOP
         self.wants_to_jump = False
         self.allowed_to_jump = False
-        self.canPortal = [1,2]
         self.intoPortal = None
         for c in self.fps.level.cubes:
             if hasattr(c, "portal_number") and c.portal_number == 1:
@@ -77,22 +76,23 @@ class PlayerController(object):
 
     def portal_touched(self, portal_cube):
         portal_number = portal_cube.portal_number
-        if self.intoPortal is None and portal_number in self.canPortal:
+        if self.intoPortal is None:
             self.player.setHpr(VBase3(0,0,0))
             self.intoPortal = portal_number
-            portal = {1: self.bluePortal, 2: self.orangePortal}.get(portal_number)
+            portal = {2: self.bluePortal, 1: self.orangePortal}.get(portal_number)
             otherportal =  {2: self.orangePortal, 1: self.bluePortal}.get(portal_number)
             # New HPR is relative to 'new' portal but it the 'same' value
             # as the old HPR seen from the 'other' portal
             self.player.setH(portal.node, 180-self.player.getH(otherportal.node))
-            self.player.setPos(portal.getPos() + self.walk / 10.)
-            #self.mass.pos = self.player.getPos()
-            # Make half a turn (only if we straffing without walking)
-            #if self.walk == self.STOP and self.strafe != self.STOP:
-            #    self.player.setH(180 - self.player.getH())
+            mat = Mat4()
+            mat.setRotateMat(self.player.getH(), Vec3(0, 0, 1))
+            walk_vec = mat.xformVec(self.walk) * self.speed*0.3
+            self.player.setPos(portal.getPos() + walk_vec)
+            self.intoPortal = portal_number
 
     def contact(self, entry):
         # Pour chaque point de contact, on regarde si c'est """sous les pieds""" et quel est l'angle de contact
+        inportal = False
         for cpidx in range(entry.getNumContacts()):
             for cub in self.fps.level.cubes:
                 if cub.odegeom == entry.getGeom1() or cub.odegeom == entry.getGeom2():
@@ -102,6 +102,7 @@ class PlayerController(object):
                         self.exit_touched(cub)
                     elif isinstance(cub, PortalCube):
                         self.portal_touched(cub)
+                        inportal = True
             contact_geom = entry.getContactGeom(cpidx)
             if contact_geom.getPos().getZ() < self.player.getPos().getZ() - self.leg_length:
                 vert = VBase3(0, 0, 1) # la verticale
@@ -109,6 +110,8 @@ class PlayerController(object):
                 if norm.project(vert).getZ() > 0.87: # angle de 60° par rapport à la verticale environ
                     self.player.currently_jumping = False
                     self.allowed_to_jump = True
+        if not inportal and self.intoPortal:
+            self.intoPortal = None
 
     def jump(self, wants_to_jump = False):
         self.wants_to_jump = wants_to_jump

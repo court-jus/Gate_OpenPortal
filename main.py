@@ -68,7 +68,7 @@ def main():
         player = PlayerObject(model = 'models/sphere', colgeom = OdeSphereGeom(base.odeSpace, .6), colbits = COLLISIONMASKS['geometry'] | COLLISIONMASKS['portals'] | COLLISIONMASKS['exit'] | COLLISIONMASKS['lava'], catbits = COLLISIONMASKS['player'])
         player.node.setScale(0.3)
         #taskMgr.add(player.updateTask, "player_ode_update")
-        pc = PlayerController(player, Vec3(1,1,5), fps)
+        pc = PlayerController(player, Vec3(*fps.level.settings.origin), fps)
         cc = InObjectCameraControler(player.node)
         #cc = CameraControler(Vec3(5,2,3), player.node)
         # The task for our simulation

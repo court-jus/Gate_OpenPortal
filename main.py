@@ -24,8 +24,12 @@ def main():
     # Toggle events verbosity :
     #base.messenger.toggleVerbose()
 
-    # Hide mouse cursor
+    # Set window properties:
+    # - Hide mouse cursor
+    # - move the window (because of the pekwm bug)
+    curProps = base.win.getProperties()
     props = WindowProperties()
+    props.setOrigin(curProps.getXOrigin() + 1, curProps.getYOrigin() + 1)
     props.setCursorHidden(True)
     base.win.requestProperties(props)
 

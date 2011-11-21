@@ -22,3 +22,4 @@ COLLISIONMASKS = {
     'all': BitMask32.allOn(),
 }
 
+PS_OUT, PS_IN = range(2)

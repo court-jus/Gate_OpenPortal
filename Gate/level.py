@@ -4,7 +4,7 @@ from panda3d.core import TextNode, TransparencyAttrib, CollisionNode, CollisionS
 from panda3d.core import Spotlight, DirectionalLight, PointLight, AmbientLight
 from panda3d.ode import OdeBoxGeom
 from Gate.constants import *
-from Gate.objects import OdeCollisionStaticGO
+from Gate.objects import OdeCollisionStaticGO, GameObject
 import json
 
 class LevelCube(OdeCollisionStaticGO):
@@ -37,12 +37,19 @@ class LavaCube(NoPortalCube):
     def __init__(self, model = "cube_nocol", texture = "lava", pos = (0,0,0), scale = (1,1,1)):
         super(LavaCube, self).__init__(model, texture, pos, scale, catbits = COLLISIONMASKS['lava'])
 
-class PortalCube(NoPortalCube):
+class PortalCube(GameObject):
 
     def __init__(self, model = "cube_nocol", texture = "A", pos = (0,0,0), scale = (1,1,1), portal_number = 1):
+        super(PortalCube, self).__init__(node = None, model = model)
+        self.texture = texture
+        if texture:
+            tex = loader.loadTexture("models/tex/%s.png" % (texture,))
+            self.node.setTexture(tex, 1)
         print "portal", portal_number,"at",pos
+        self.setPos(*pos)
+        sx,sy,sz = scale
+        self.node.setScale(sx,sy,sz)
         self.portal_number = portal_number
-        super(PortalCube, self).__init__(model, texture, pos, scale, catbits = COLLISIONMASKS['portals'])
 
 class Level(object):
 

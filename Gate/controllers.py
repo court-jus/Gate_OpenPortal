@@ -23,7 +23,7 @@ class PlayerController(object):
         self.walk = self.STOP
         self.wants_to_jump = False
         self.allowed_to_jump = False
-        self.intoPortal = None
+        self.portalStatus = PS_OUT
         for c in self.fps.level.cubes:
             if hasattr(c, "portal_number") and c.portal_number == 1:
                 self.bluePortal = c
@@ -74,35 +74,16 @@ class PlayerController(object):
             print "You won !"
             sys.exit(0)
 
-    def portal_touched(self, portal_cube):
-        portal_number = portal_cube.portal_number
-        if self.intoPortal is None:
-            self.player.setHpr(VBase3(0,0,0))
-            self.intoPortal = portal_number
-            portal = {2: self.bluePortal, 1: self.orangePortal}.get(portal_number)
-            otherportal =  {2: self.orangePortal, 1: self.bluePortal}.get(portal_number)
-            # New HPR is relative to 'new' portal but it the 'same' value
-            # as the old HPR seen from the 'other' portal
-            self.player.setH(portal.node, 180-self.player.getH(otherportal.node))
-            mat = Mat4()
-            mat.setRotateMat(self.player.getH(), Vec3(0, 0, 1))
-            walk_vec = mat.xformVec(self.walk) * self.speed*0.3
-            self.player.setPos(portal.getPos() + walk_vec)
-            self.intoPortal = portal_number
-
     def contact(self, entry):
         # Pour chaque point de contact, on regarde si c'est """sous les pieds""" et quel est l'angle de contact
-        inportal = False
         for cpidx in range(entry.getNumContacts()):
             for cub in self.fps.level.cubes:
-                if cub.odegeom == entry.getGeom1() or cub.odegeom == entry.getGeom2():
-                    if isinstance(cub, LavaCube):
-                        self.lava_touched(cub)
-                    elif isinstance(cub, LevelExit):
-                        self.exit_touched(cub)
-                    elif isinstance(cub, PortalCube):
-                        self.portal_touched(cub)
-                        inportal = True
+                if hasattr(cub, 'odegeom'):
+                    if cub.odegeom == entry.getGeom1() or cub.odegeom == entry.getGeom2():
+                        if isinstance(cub, LavaCube):
+                            self.lava_touched(cub)
+                        elif isinstance(cub, LevelExit):
+                            self.exit_touched(cub)
             contact_geom = entry.getContactGeom(cpidx)
             if contact_geom.getPos().getZ() < self.player.getPos().getZ() - self.leg_length:
                 vert = VBase3(0, 0, 1) # la verticale
@@ -110,8 +91,6 @@ class PlayerController(object):
                 if norm.project(vert).getZ() > 0.87: # angle de 60° par rapport à la verticale environ
                     self.player.currently_jumping = False
                     self.allowed_to_jump = True
-        if not inportal and self.intoPortal:
-            self.intoPortal = None
 
     def jump(self, wants_to_jump = False):
         self.wants_to_jump = wants_to_jump
@@ -129,7 +108,32 @@ class PlayerController(object):
         walk_vec = mat.xformVec(self.walk) * self.speed
         walk_vec.setZ(self.player.odebody.getLinearVel().getZ())
         self.player.odebody.setLinearVel(walk_vec)
+        self.updatePortalStatus()
         return task.cont
+
+    def isInPortal(self):
+        ps = 1
+        x, y, z = self.player.getPos()
+        for p in (self.bluePortal, self.orangePortal):
+            px, py, pz = p.getPos()
+            if x > px - ps and x < px + ps and\
+               y > py - ps and y < py + ps and\
+               z > pz - ps and z < pz + ps:
+                return p
+
+    def updatePortalStatus(self):
+        inp = self.isInPortal()
+        if inp is None:
+            if self.portalStatus == PS_IN:
+                self.portalStatus = PS_OUT
+        else:
+            otherp = {self.bluePortal: self.orangePortal,
+                      self.orangePortal: self.bluePortal}[inp]
+            relpos = self.player.node.getPos(inp.node)
+            if self.portalStatus == PS_OUT:
+                self.player.setPos(otherp.node, relpos)
+                self.portalStatus = PS_IN
+                self.player.setH(self.player.getH() + 180)
 
 class CameraControler(object):
 

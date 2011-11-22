@@ -11,7 +11,7 @@ class LevelCube(OdeCollisionStaticGO):
 
     def __init__(self, model = "cube", texture = "dallage", pos = (0,0,0), scale = (1,1,1), colbits = COLLISIONMASKS['player'], catbits = COLLISIONMASKS['geometry']):
         self.texture = texture
-        super(LevelCube, self).__init__(model = model, colgeom = OdeBoxGeom(base.odeSpace, *scale), colbits = colbits, catbits = catbits)
+        super(LevelCube, self).__init__(model = model, colgeom = OdeBoxGeom(base.odeSpace, 2.5,2.5,2.5), colbits = colbits, catbits = catbits)
         if texture:
             tex = loader.loadTexture("models/tex/%s.png" % (texture,))
             self.node.setTexture(tex, 1)

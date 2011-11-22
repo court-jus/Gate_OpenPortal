@@ -20,6 +20,8 @@ COLLISIONMASKS = {
     'lava': BitMask32.bit(5),
     'geometry': GeomNode.getDefaultCollideMask(),
     'all': BitMask32.allOn(),
+    'player_col': BitMask32.bit(2) | BitMask32.bit(4) | BitMask32.bit(5) | GeomNode.getDefaultCollideMask(),
 }
 
-PS_OUT, PS_IN = range(2)
+PS_OUT = 0
+PS_IN = 1

@@ -4,7 +4,7 @@ from Gate.constants import *
 from Gate.level import LavaCube, LevelExit, PortalCube
 from panda3d.core import Vec3, VBase3, Mat4
 
-class PlayerController(object):
+class BasePlayerController(object):
     """
     Controls the player movement with keys
     """
@@ -43,8 +43,6 @@ class PlayerController(object):
         base.accept( "r-up" , self.resetPosition )
         base.accept( "p-up" , self.showPosition )
 
-        base.accept("yourCollision", self.contact)
-
         taskMgr.add(self.moveUpdate, 'move-task')
         taskMgr.add(self.jumpUpdate, 'jump-task')
 
@@ -73,24 +71,6 @@ class PlayerController(object):
         else:
             print "You won !"
             sys.exit(0)
-
-    def contact(self, entry):
-        # Pour chaque point de contact, on regarde si c'est """sous les pieds""" et quel est l'angle de contact
-        for cpidx in range(entry.getNumContacts()):
-            for cub in self.fps.level.cubes:
-                if hasattr(cub, 'odegeom'):
-                    if cub.odegeom == entry.getGeom1() or cub.odegeom == entry.getGeom2():
-                        if isinstance(cub, LavaCube):
-                            self.lava_touched(cub)
-                        elif isinstance(cub, LevelExit):
-                            self.exit_touched(cub)
-            contact_geom = entry.getContactGeom(cpidx)
-            if contact_geom.getPos().getZ() < self.player.getPos().getZ() - self.leg_length:
-                vert = VBase3(0, 0, 1) # la verticale
-                norm = contact_geom.getNormal()
-                if norm.project(vert).getZ() > 0.87: # angle de 60° par rapport à la verticale environ
-                    self.player.currently_jumping = False
-                    self.allowed_to_jump = True
 
     def jump(self, wants_to_jump = False):
         self.wants_to_jump = wants_to_jump
@@ -134,6 +114,40 @@ class PlayerController(object):
                 self.player.setPos(otherp.node, relpos)
                 self.portalStatus = PS_IN
                 self.player.setH(self.player.getH() + 180)
+
+class PlayerController(BasePlayerController):
+
+    def __init__(self, player, origin, fps):
+        super(PlayerController, self).__init__(player, origin, fps)
+        base.accept("yourCollision", self.contact)
+
+    def contact(self, entry):
+        # Pour chaque point de contact, on regarde si c'est """sous les pieds""" et quel est l'angle de contact
+        for cpidx in range(entry.getNumContacts()):
+            for cub in self.fps.level.cubes:
+                if hasattr(cub, 'odegeom'):
+                    if cub.odegeom == entry.getGeom1() or cub.odegeom == entry.getGeom2():
+                        if isinstance(cub, LavaCube):
+                            self.lava_touched(cub)
+                        elif isinstance(cub, LevelExit):
+                            self.exit_touched(cub)
+            contact_geom = entry.getContactGeom(cpidx)
+            if contact_geom.getPos().getZ() < self.player.getPos().getZ() - self.leg_length:
+                vert = VBase3(0, 0, 1) # la verticale
+                norm = contact_geom.getNormal()
+                if norm.project(vert).getZ() > 0.87: # angle de 60° par rapport à la verticale environ
+                    self.player.currently_jumping = False
+                    self.allowed_to_jump = True
+
+    def moveUpdate(self, task):
+        mat = Mat4()
+        mat.setRotateMat(self.player.getH(), Vec3(0, 0, 1))
+        walk_vec = mat.xformVec(self.walk) * self.speed
+        walk_vec.setZ(self.player.odebody.getLinearVel().getZ())
+        self.player.odebody.setLinearVel(walk_vec)
+        self.updatePortalStatus()
+        return task.cont
+
 
 class CameraControler(object):
 

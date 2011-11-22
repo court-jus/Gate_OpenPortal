@@ -6,9 +6,10 @@ from Gate.osd import OSD
 from Gate.player import Player
 from Gate.sound import MusicPlayer
 from optparse import OptionParser
-from panda3d.core import WindowProperties, Vec3, BitMask32, Vec4
-from panda3d.ode import OdePlaneGeom, OdeUtil
+from panda3d.core import WindowProperties, Vec3, BitMask32, Vec4, Quat
+from panda3d.ode import OdePlaneGeom, OdeUtil, OdeBody, OdeMass
 from Gate.constants import *
+from random import randint, random
 
 useOde = True
 
@@ -42,7 +43,7 @@ def main():
         base.odeWorld = OdeWorld()
         base.odeWorld.setGravity(0, 0, -9.81)
         base.odeWorld.initSurfaceTable(1)
-        #base.odeWorld.setSurfaceEntry(0, 0, 1000, 0.0, 9.1, 0., 0.00001, 0.0, 0.)
+        #base.odeWorld.setSurfaceEntry(0, 0, 100,1,9.1,0.9,0.00001,0.0,0.002)
         base.odeWorld.setSurfaceEntry(0, 0, 0, 0, 0, 0, 0, 0, 0)
         base.odeSpace = OdeSimpleSpace()
         base.odeCGroup = OdeJointGroup()
@@ -55,21 +56,17 @@ def main():
     osd = OSD(base)
     mplayer = MusicPlayer(base, osd)
     # Add a plane to collide with
-    #cm = CardMaker("ground")
-    #cm.setFrame(-20, 20, -20, 20)
-    #ground = render.attachNewNode(cm.generate())
-    #ground.setPos(0, 0, 0); ground.lookAt(0, 0, -1)
-    groundGeom = OdePlaneGeom(base.odeSpace, Vec4(0, 0, 1, 0))
+    groundGeom = OdePlaneGeom(base.odeSpace, Vec4(0, 0, 3, 0))
     groundGeom.setCollideBits(COLLISIONMASKS['player'])
     groundGeom.setCategoryBits(COLLISIONMASKS['geometry'])
     if options.music:
         mplayer.play_random_track()
     if useOde:
         base.camLens.setFov(100)
-        from Gate.objects import PlayerObject
-        from Gate.controllers import PlayerController, InObjectCameraControler, CameraControler
+        from Gate.objects import PlayerObject, NoColPlayerObject
+        from Gate.controllers import PlayerController, InObjectCameraControler, CameraControler, BasePlayerController
         from panda3d.ode import OdeSphereGeom
-        player = PlayerObject(model = 'models/sphere', colgeom = OdeSphereGeom(base.odeSpace, .6), colbits = COLLISIONMASKS['geometry'] | COLLISIONMASKS['portals'] | COLLISIONMASKS['exit'] | COLLISIONMASKS['lava'], catbits = COLLISIONMASKS['player'])
+        player = PlayerObject(model = 'models/sphere', colbits = COLLISIONMASKS['player_col'] | COLLISIONMASKS['player'], catbits = COLLISIONMASKS['player'])
         player.node.setScale(0.3)
         #taskMgr.add(player.updateTask, "player_ode_update")
         pc = PlayerController(player, Vec3(*fps.level.settings.origin), fps)
@@ -80,17 +77,62 @@ def main():
             base.odeSpace.autoCollide() # Setup the contact joints
             # Step the simulation and set the new positions
             base.odeWorld.quickStep(globalClock.getDt())
-            #for np, body in boxes:
-            #    np.setPosQuat(render, body.getPosition(), Quat(body.getQuaternion()))
             player.updateTask()
             base.odeCGroup.empty() # Clear the contact joints
+            for np, geom, sound in balls: 
+              if not np.isEmpty(): 
+                np.setPosQuat(render, geom.getBody().getPosition(), Quat(geom.getBody().getQuaternion())) 
 
         def makeCallWithArgs(fn, *args, **kwargs):
             def new_fn(task):
                 fn(*args, **kwargs)
                 return task.cont
             return new_fn
+        # This 'balls' list contains tuples of nodepaths with their ode geoms 
+        balls = []
+        # Load the ball 
+        ball = loader.loadModel("smiley") 
+        ball.flattenLight() # Apply transform 
+        ball.setTextureOff() 
 
+        radius = 0.3
+        for i in range(15): 
+          # Setup the geometry 
+          ballNP = ball.copyTo(render) 
+          ballNP.setPos(randint(-7, 7), randint(-7, 7), 10 + random() * 5.0) 
+          ballNP.setColor(random(), random(), random(), 1) 
+          ballNP.setHpr(randint(-45, 45), randint(-45, 45), randint(-45, 45)) 
+          # Create the body and set the mass 
+          ballBody = OdeBody(base.odeWorld) 
+          M = OdeMass() 
+          M.setSphere(50, radius) 
+          ballBody.setMass(M) 
+          ballBody.setPosition(ballNP.getPos(render)) 
+          ballBody.setQuaternion(ballNP.getQuat(render)) 
+          # Create a ballGeom 
+          ballGeom = OdeSphereGeom(base.odeSpace, radius) 
+          ballGeom.setCollideBits(COLLISIONMASKS['player_col'] | COLLISIONMASKS['player'])
+          ballGeom.setCategoryBits(COLLISIONMASKS['player'])
+          ballGeom.setBody(ballBody) 
+          # Create the sound 
+          ballSound = loader.loadSfx("audio/sfx/GUI_rollover.wav") 
+          balls.append((ballNP, ballGeom, ballSound)) 
+
+        # Setup collision event 
+        def onCollision(entry): 
+          geom1 = entry.getGeom1() 
+          geom2 = entry.getGeom2() 
+          body1 = entry.getBody1() 
+          body2 = entry.getBody2() 
+          # Look up the NodePath to destroy it 
+          for np, geom, sound in balls: 
+            if geom == geom1 or geom == geom2: 
+              velocity = body1.getLinearVel().length() 
+              if velocity > 2.5 and sound.status != sound.PLAYING: 
+                sound.setVolume(velocity / 2.0) 
+                sound.play() 
+
+        base.accept("ode-collision", onCollision) 
         taskMgr.doMethodLater(0.5, makeCallWithArgs(simulationTask, player), 'ode')
     else:
         player = Player(base, fps)

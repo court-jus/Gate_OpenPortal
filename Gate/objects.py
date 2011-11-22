@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from panda3d.core import NodePath, Quat, Vec3
-from panda3d.ode import OdeBody, OdeSphereGeom, OdeMass
+from panda3d.ode import OdeBody, OdeSphereGeom, OdeMass, OdeRayGeom
 from Gate.constants import *
 
 class GameObject(object):
@@ -54,10 +54,9 @@ class OdeCollisionStaticGO(GameObject):
 
     def __init__(self, node = None, model = None, colgeom = None, colbits = COLLISIONMASKS['all'], catbits = COLLISIONMASKS['all']):
         super(OdeCollisionStaticGO, self).__init__(node, model)
-        if colgeom:
-            self.odegeom = colgeom
-        else:
-            self.odegeom = OdeSphereGeom(base.odeSpace, 1)
+        if not colgeom:
+            colgeom = OdeSphereGeom(base.odeSpace, 1)
+        self.odegeom = colgeom
         self.odegeom.setCollideBits(colbits)
         self.odegeom.setCategoryBits(catbits)
         self.odegeom.setPosition(self.node.getPos(render))
@@ -119,12 +118,32 @@ class PlayerObject(OdeCollisionGO):
     density = 1010 # Wikipedia said that 1010 kg/m3 is the average human body
     jump_power = 700000
 
-    def __init__(self, *args, **kwargs):
-        super(PlayerObject, self).__init__(*args, **kwargs)
+    def __init__(self, model = 'models/sphere', colgeom = None, colbits = COLLISIONMASKS['all'], catbits = COLLISIONMASKS['all']):
+        self.node = loader.loadModel(model)
+        self.node.reparentTo(render)
+        self.oldpos = None
+        self.odebody = OdeBody(base.odeWorld)
+        self.odebody.setPosition(self.getPos(render))
+        self.odebody.setQuaternion(self.getQuat(render))
+        self.odegeoms = [
+            OdeSphereGeom(base.odeSpace, 0.6),
+            ]
+        for geom in self.odegeoms:
+            geom.setCollideBits(colbits)
+            geom.setCategoryBits(catbits)
+            geom.setPosition(self.node.getPos(render))
+            geom.setQuaternion(self.node.getQuat(render))
+            geom.setBody(self.odebody)
+        self.odemass = OdeMass()
+        self.odemass.setSphere(self.density, 1)
+        self.odebody.setMass(self.odemass)
         self.jump = False
         self.currently_jumping = False
 
     def updateTask(self):
+        if self.oldpos != self.getPos():
+            print self.getPos()
+        self.oldpos = self.getPos()
         if self.jump:
             self.currently_jumping = True
             self.odebody.setForce(Vec3(0,0,self.jump_power))
@@ -137,3 +156,61 @@ class PlayerObject(OdeCollisionGO):
         self.odebody.setQuaternion(self.node.getQuat(render))
         self.odebody.setTorque(Vec3(0,0,0))
         self.odebody.setAngularVel(Vec3(0,0,0))
+
+    def setPos(self, *args):
+        self.node.setPos(*args)
+        for geom in self.odegeoms:
+            geom.setPosition(self.getPos(render))
+        self.odebody.setPosition(self.getPos(render))
+
+    def setQuat(self, *args):
+        self.node.setQuat(*args)
+        for geom in self.odegeoms:
+            geom.setQuaternion(self.getQuat(render))
+        self.odebody.setQuaternion(self.getQuat(render))
+
+class NoColPlayerObject(GameObject):
+
+    density = 1010 # Wikipedia said that 1010 kg/m3 is the average human body
+
+    def __init__(self, model = 'models/sphere', level = None):
+        self.node = loader.loadModel(model)
+        self.node.reparentTo(render)
+        self.odebody = OdeBody(base.odeWorld)
+        self.odebody.setPosition(self.node.getPos())
+        self.odebody.setQuaternion(self.node.getQuat())
+        self.odemass = OdeMass()
+        self.odemass.setSphere(self.density, 1)
+        self.odebody.setMass(self.odemass)
+        self.level = level
+        self.oldpos = None
+        self.jump = False
+        self.currently_jumping = False
+
+    def updateTask(self):
+        if self.oldpos != self.getPos():
+            print self.getPos()
+        self.oldpos = self.getPos()
+        if self.jump:
+            self.currently_jumping = True
+            self.jump = False
+        if self.check_new_position():
+            self.node.setPos(self.odebody.getPosition())
+        else:
+            self.odebody.setPosition(self.node.getPos())
+        self.odebody.setQuaternion(self.node.getQuat(render))
+        self.odebody.setTorque(Vec3(0,0,0))
+        self.odebody.setAngularVel(Vec3(0,0,0))
+
+    def check_new_position(self):
+        x, y, z = self.odebody.getPosition()
+        cs = 0.5
+        for cube in self.level.cubes:
+            cx, cy, cz = cube.node.getPos()
+            if x > cx - cs and x < cx + cs and y > cy - cs and y < cy + cs and z > cz - cs and z < cz + cs:
+                print "In",cx,cy,cz,x,y,z
+                return False
+        if z < 0:
+            print "Below 0"
+            return False
+        return True

@@ -2,8 +2,10 @@
 from panda3d.core import BitMask32, Quat, VBase4, Vec3
 from panda3d.core import TextNode, TransparencyAttrib, CollisionNode, CollisionSphere, CollisionHandlerEvent
 from panda3d.core import Spotlight, DirectionalLight, PointLight, AmbientLight
-from Gate.constants import *
+from Gate import constants
 import json
+
+COLLISIONMASKS = constants.COLLISIONMASKS
 
 class LevelCube(object):
 
@@ -13,7 +15,7 @@ class LevelCube(object):
 
         self.node = loader.loadModel(model)
         if texture:
-            tex = loader.loadTexture("models/tex/%s.png" % (texture,))
+            tex = constants.TEXTURES[texture]
             self.node.setTexture(tex, 1)
         self.node.reparentTo(render)
         self.node.setPos(*pos)
@@ -80,6 +82,8 @@ class Level(object):
         self.settings = None
         self.editor_mode = False
         self.editing_undo = []
+        for ascii, (texture, model) in self.LEGEND.items():
+            constants.TEXTURES[texture] = loader.loadTexture('models/tex/%s.png' % (texture,))
 
     def makeCube(self, cubetype, pos, scale, noundo = False):
         texture, model = self.LEGEND.get(cubetype, ('A', LevelCube))

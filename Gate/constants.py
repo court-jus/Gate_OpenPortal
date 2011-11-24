@@ -20,3 +20,5 @@ COLLISIONMASKS = {
     'lava': BitMask32.bit(5),
     'geometry': GeomNode.getDefaultCollideMask(),
 }
+
+TEXTURES = {}

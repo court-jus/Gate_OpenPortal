@@ -14,6 +14,7 @@ class LevelCube(object):
         self.cubetype = cubetype
 
         self.node = loader.loadModel(model)
+        self.node.setTransparency(TransparencyAttrib.MAlpha)
         if texture:
             tex = constants.TEXTURES[texture]
             self.node.setTexture(tex, 1)
@@ -180,6 +181,7 @@ class Level(object):
             fp.write(jsonsettings)
             fp.write("\n-LEVEL-\n")
             fp.write("\n-Z-\n".join(planes))
+        print "Level %s saved !" % (levelname,)
 
     # EDITOR MODE
     def addCube(self, cube, noundo = False):
@@ -284,6 +286,11 @@ class Level(object):
         self.deleteCubeAt(x, y, z, noundo)
 
     def replaceCube(self, x, y, z, newcubetype, noundo = False):
+        lc = self.cubes_hash.get((x,y,z))
+        lc.cubetype = newcubetype
+        lc.node.setTexture(constants.TEXTURES[self.LEGEND[newcubetype][0]])
+        # OLD METHOD :
+        return
         lc = self.cubes_hash.pop((x,y,z))
         if not lc:
             return

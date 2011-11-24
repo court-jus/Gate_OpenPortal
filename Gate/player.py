@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from panda3d.core import Vec3, VBase3, BitMask32
-from panda3d.core import NodePath
+from panda3d.core import NodePath, TextureStage
 from panda3d.core import CollisionNode, CollisionSphere, CollisionRay, CollisionHandlerQueue, CollisionHandlerEvent
 from Gate.constants import *
 from Gate.physics.gravity import Mass
@@ -49,16 +49,21 @@ class Player(object):
         self.current_target = None
         self.canPortal = []
         self.canSetTarget = True
+        self.selectedCubes = []
+        self.editorTextureStage = TextureStage('editor')
+        self.editorSelectedTexture = loader.loadTexture('models/tex/selected.png')
+        self.selectingForMulti = False
         # Init functions
         self.loadModel()
         self.makePortals()
         self.setUpCamera()
-        self.createCollisions()
         if self.fps.editor_mode:
+            self.createMouseCollisions()
             self.speed = self.speed * 5
             self.attachEditorControls()
             self.attachEditorTasks()
         else:
+            self.createCollisions()
             self.attachStandardControls()
             self.attachStandardTasks()
 
@@ -123,6 +128,11 @@ class Player(object):
             self.node.lookAt(self.fps.level.cubes_hash.keys()[0])
 
     def createCollisions(self):
+        self.createPlayerCollisions()
+        self.createMouseCollisions()
+        self.createPortalCollisions()
+
+    def createPlayerCollisions(self):
         """ create a collision solid and ray for the player """
         cn = CollisionNode('player')
         cn.setFromCollideMask(COLLISIONMASKS['geometry'])
@@ -156,6 +166,7 @@ class Player(object):
         self.ceilGroundHandler = CollisionHandlerQueue()
         self.base.cTrav.addCollider(solid, self.ceilGroundHandler)
 
+    def createMouseCollisions(self):
         # Fire the portals
         firingNode = CollisionNode('mouseRay')
         firingNP = self.base.camera.attachNewNode(firingNode)
@@ -168,6 +179,7 @@ class Player(object):
         self.firingHandler = CollisionHandlerQueue()
         self.base.cTrav.addCollider(firingNP, self.firingHandler)
 
+    def createPortalCollisions(self):
         # Enter the portals
         cn = CollisionNode('bluePortal')
         cn.setFromCollideMask(COLLISIONMASKS['portals'])
@@ -187,7 +199,6 @@ class Player(object):
         h.addInPattern('%fn-into-%in')
         h.addOutPattern('%fn-outof-%in')
         self.base.cTrav.addCollider(np, h)
-
 
     def attachCommonControls(self):
         self.base.accept( "z" if AZERTY else "w" , self.addWalk,[self.FORWARD])
@@ -225,6 +236,11 @@ class Player(object):
 
     def attachEditorControls(self):
         self.attachCommonControls()
+        self.base.accept( "space" , self.__setattr__, ['selectingForMulti', 1])
+        self.base.accept( "space-up" , self.__setattr__, ['selectingForMulti', 0])
+        self.base.accept( "shift-space" , self.__setattr__, ['selectingForMulti', 2])
+        self.base.accept( "shift-space-up" , self.__setattr__, ['selectingForMulti', 0])
+        self.base.accept( "c-up" , self.clearMultiSelectedCubes)
         self.base.accept( "mouse1" , self.selectCubeForCopy, [1])
         self.base.accept( "wheel_up" , self.selectCubeForChange, [1] )
         self.base.accept( "wheel_down" , self.selectCubeForChange, [-1] )
@@ -286,6 +302,8 @@ class Player(object):
             if self.fps.editor_mode:
                 cube, point, normal = self.selectCube()
                 self.osd.updateTargetPosition(cube)
+        if self.selectingForMulti:
+            self.selectCubeForMulti()
         return task.cont
 
     def addWalk(self, vec):
@@ -408,17 +426,53 @@ class Player(object):
         else:
             return None, None, None
 
+    def clearMultiSelectedCubes(self):
+        for c in self.selectedCubes:
+            c.clearTexture(self.editorTextureStage)
+        self.selectedCubes = []
+
+    def selectCubeForMulti(self):
+        cube, point, normal = self.selectCube()
+        if cube:
+            if self.selectingForMulti == 1:
+                cube.setTexture(self.editorTextureStage, self.editorSelectedTexture)
+                if cube not in self.selectedCubes:
+                    self.selectedCubes.append(cube)
+            elif cube in self.selectedCubes:
+                cube.clearTexture(self.editorTextureStage)
+                self.selectedCubes.remove(cube)
+
     def selectCubeForCopy(self, qty = 1):
         cube, point, normal = self.selectCube()
-        self.fps.level.copyCube(cube, normal, qty)
+        if not (cube and point and normal):
+            return
+        if self.selectedCubes:
+            for c in self.selectedCubes:
+                self.fps.level.copyCube(c, normal, qty)
+            self.clearMultiSelectedCubes()
+        else:
+            self.fps.level.copyCube(cube, normal, qty)
 
     def selectCubeForDelete(self):
         cube, point, normal = self.selectCube()
-        self.fps.level.deleteCube(cube)
+        if not (cube and point and normal):
+            return
+        if self.selectedCubes:
+            for c in self.selectedCubes:
+                self.fps.level.deleteCube(c)
+            self.clearMultiSelectedCubes()
+        else:
+            self.fps.level.deleteCube(cube)
 
     def selectCubeForChange(self, step = 1):
         cube, point, normal = self.selectCube()
-        self.fps.level.changeCube(cube, step)
+        if not (cube and point and normal):
+            return
+        if self.selectedCubes:
+            for c in self.selectedCubes:
+                self.fps.level.changeCube(c, step)
+        else:
+            self.fps.level.changeCube(cube, step)
 
     def selectCubeForRectangle(self, makeRoom = False):
         cube, point, normal = self.selectCube()

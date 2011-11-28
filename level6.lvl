@@ -1,4 +1,4 @@
-{"origin": [16.5, 24.5, 1.0], "next_level": null, "pointlights": [[16.5, 24.5, 2.0]]}
+{"origin": [16.62470817565918, 23.439130783081055, 1.5528672933578491], "next_level": "level7", "pointlights": [[16.5, 24.5, 2.0], [7.9042215347290039, 14.563895225524902, 6.1576638221740723]]}
 -LEVEL-
 MMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMM
@@ -15,99 +15,267 @@ MMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMM
-MMMMMMMMMMMMMMMMMMM
+MMMMMMMMMMMMMMMM==M
+MMMMMMMMMMMMMMMM==M
+MMMMMMMMMMMMMMMM==M
+MMMMMMMMMMMMMMMM==M
+MMMMMMMMMMMMMMMM==M
+MMMMMMMMMMMMMMMM==M
+MMMMMMMMMMMMMMMM==M
+MMMMMMMMMMMMMMMM==M
+MMMMMMMMMMMMMMMM==M
+MMMMMMMMMMMMMMMM==M
+MMMMMMMMMMMMMMMM==M
 MMMMMMMMMMMMMMMMMMM
 -Z-
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-               M  M
-               M  M
-               M  M
-               MMMM
+MMMMMMMMMMMMMMMMMMM
+MX                M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M              MMMM
+M              M MM
+M              M  M
+M              M  M
+M              M  M
+M              M  M
+M              M  M
+M              M  M
+M              M  M
+M              M  M
+M              M  M
+M              M  M
+MMMMMMMMMMMMMMMMMMM
 -Z-
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-               M  M
-               M  M
-               M  M
-               MMMM
+MMMMMMMMMMMMMMMMMMM
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M              MMMM
+M              MM M
+M              M  M
+M              M  M
+M              M  M
+M              M  M
+M              M  M
+M              M  M
+M              M  M
+M              M  M
+M              M  M
+M              M  M
+MMMMMMMMMMMMMMMMMMM
 -Z-
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-                  M
-               MMMM
-               MMMM
-               MMMM
-               MMMM
+MMMMMMMMMMMMMMMMMMM
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M              MMMM
+M              M  M
+M              MM M
+M              MM M
+M              MMMM
+M              MMMM
+M              MMMM
+M              MMMM
+M              MMMM
+M              MMMM
+M              MMMM
+M              MMMM
+MMMMMMMMMMMMMMMMMMM
+-Z-
+MMMMMMMMMMMMMMMMMMM
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M              MMMM
+M              M  M
+M              M  M
+M              M  M
+M              M  M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+MMMMMMMMMMMMMMMMMMM
+-Z-
+MMMMMMMMMMMMMMMMMMM
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M              MMMM
+M              M  M
+M              M  M
+M              M  M
+M              M  M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+MMMMMMMMMMMMMMMMMMM
+-Z-
+MMMMMMMMMMMMMMMMMMM
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M              MMMM
+M              M##M
+M              M##M
+M              M##M
+M              M##M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+MMMMMMMMMMMMMMMMMMM
+-Z-
+MMMMMMMMMMMMMMMMMMM
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+MMMMMMMMMMMMMMMMMMM
+-Z-
+MMMMMMMMMMMMMMMMMMM
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+MMMMMMMMMMMMMMMMMMM
+-Z-
+MMMMMMMMMMMMMMMMMMM
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+M                 M
+MMMMMMMMMMMMMMMMMMM
